@@ -1,4 +1,4 @@
-/* Clean and simple styling for signup form */
+/* Clean and simple styling for login form */
 * {
     margin: 0;
     padding: 0;
@@ -21,7 +21,7 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     padding: 40px;
     width: 100%;
-    max-width: 450px;
+    max-width: 400px;
     position: relative;
 }
 
@@ -45,7 +45,7 @@ h1 {
     letter-spacing: -0.5px;
 }
 
-.register-form {
+.login-form {
     display: flex;
     flex-direction: column;
 }
@@ -64,7 +64,6 @@ label {
     letter-spacing: 0.5px;
 }
 
-input[type="text"],
 input[type="email"],
 input[type="password"] {
     width: 100%;
@@ -76,7 +75,6 @@ input[type="password"] {
     background: #f7fafc;
 }
 
-input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
     outline: none;
@@ -88,7 +86,7 @@ input[type="password"]:focus {
 
 .checkbox-group {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
     margin-bottom: 24px;
 }
@@ -97,9 +95,7 @@ input[type="password"]:focus {
     width: 18px;
     height: 18px;
     margin: 0;
-    margin-top: 2px;
     cursor: pointer;
-    flex-shrink: 0;
 }
 
 .checkbox-group label {
@@ -110,7 +106,6 @@ input[type="password"]:focus {
     letter-spacing: 0;
     cursor: pointer;
     font-size: 14px;
-    line-height: 1.5;
 }
 
 .submit-btn {
@@ -182,6 +177,22 @@ input[type="password"]:focus {
     border: 1px solid #feb2b2;
 }
 
+/* Demo credentials styling */
+.container > div:first-child {
+    background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+    border: 1px solid #81e6d9;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: #234e52;
+    text-align: center;
+}
+
+.container > div:first-child strong {
+    color: #285e61;
+}
+
 /* Responsive design */
 @media (max-width: 480px) {
     body {
@@ -191,7 +202,6 @@ input[type="password"]:focus {
     .container {
         padding: 32px 24px;
         border-radius: 12px;
-        max-width: 100%;
     }
     
     h1 {
@@ -199,7 +209,6 @@ input[type="password"]:focus {
         margin-bottom: 28px;
     }
     
-    input[type="text"],
     input[type="email"],
     input[type="password"] {
         padding: 14px;
@@ -208,9 +217,5 @@ input[type="password"]:focus {
     
     .submit-btn {
         padding: 14px 20px;
-    }
-    
-    .form-group {
-        margin-bottom: 20px;
     }
 }

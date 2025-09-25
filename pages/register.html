@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration Form</title>
+    <title>Sign Up - Street Reads</title>
     <link rel="stylesheet" href="/css/register.css">
 </head>
 <body>
     <div class="container">
-        <h1>Register</h1>
+        <h1>Street Reads</h1>
         <form id="registerForm" class="register-form">
             <div class="form-group">
                 <label for="firstName">First Name:</label>
@@ -32,15 +32,19 @@
             
             <div class="form-group checkbox-group">
                 <input type="checkbox" id="terms" name="terms" required>
-                <label for="terms">I agre to the terms and conditions</label>
+                <label for="terms">I agree to the terms and conditions</label>
             </div>
             
             <button type="submit" class="submit-btn">Register</button>
         </form>
         
+        <div class="form-footer">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+        
         <div id="message" class="message"></div>
     </div>
     
-    <script src="register.js"></script>
+    <script src="/js/register.js"></script>
 </body>
 </html>
