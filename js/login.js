@@ -1,4 +1,4 @@
-// Login form JavaScript
+// Login form with Firebase Authentication
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('loginForm');
     const messageDiv = document.getElementById('message');
@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const validation = validateLoginForm(data);
         
         if (validation.isValid) {
-            // Simulate login process
-            simulateLogin(data);
+            // Login user with Firebase
+            loginUser(data);
         } else {
             showMessage(validation.message, 'error');
         }
@@ -41,7 +41,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Forgot password handler
     forgotPasswordLink.addEventListener('click', function(e) {
         e.preventDefault();
-        showMessage('Password reset functionality would be implemented here.', 'error');
+        const email = document.getElementById('email').value;
+        
+        if (!email) {
+            showMessage('Please enter your email address first.', 'error');
+            return;
+        }
+        
+        sendPasswordReset(email);
     });
 });
 
@@ -58,8 +65,6 @@ function validateLoginForm(data) {
     
     if (!data.password) {
         errors.push('Password is required');
-    } else if (data.password.length < 6) {
-        errors.push('Password must be at least 6 characters long');
     }
     
     return {
@@ -74,26 +79,84 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-// Simulate login process
-function simulateLogin(data) {
+// Login user with Firebase
+function loginUser(data) {
     showMessage('Logging in...', 'success');
     
-    // Simulate API call delay
-    setTimeout(() => {
-        // Mock validation - in real app, this would be an API call
-        if (data.email === 'demo@example.com' && data.password === 'password123') {
-            showMessage('Login successful! Redirecting...', 'success');
+    // Check if auth is available
+    if (!auth) {
+        showMessage('Firebase authentication is not available. Please check your configuration.', 'error');
+        return;
+    }
+    
+    console.log('Attempting to login with email:', data.email);
+    
+    // Sign in with Firebase Auth
+    auth.signInWithEmailAndPassword(data.email, data.password)
+        .then((userCredential) => {
+            // User signed in successfully
+            const user = userCredential.user;
+            showMessage(`Welcome back, ${user.displayName || user.email}! Redirecting...`, 'success');
             
-            // Simulate redirect after successful login
+            // Redirect to dashboard or main page after 2 seconds
             setTimeout(() => {
-                // In a real application, you would redirect to dashboard or home page
-                showMessage('Redirecting to dashboard...', 'success');
-                // window.location.href = 'dashboard.html';
+                // window.location.href = 'dashboard.html'; // Uncomment when you have a dashboard
+                console.log('User logged in:', user);
             }, 2000);
-        } else {
-            showMessage('Invalid email or password. Please try again.', 'error');
-        }
-    }, 1500);
+        })
+        .catch((error) => {
+            // Handle errors
+            let errorMessage = 'Login failed. Please try again.';
+            
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    errorMessage = 'No account found with this email address.';
+                    break;
+                case 'auth/wrong-password':
+                    errorMessage = 'Incorrect password. Please try again.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Please enter a valid email address.';
+                    break;
+                case 'auth/user-disabled':
+                    errorMessage = 'This account has been disabled.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Too many failed attempts. Please try again later.';
+                    break;
+                case 'auth/network-request-failed':
+                    errorMessage = 'Network error. Please check your internet connection.';
+                    break;
+                default:
+                    errorMessage = error.message;
+            }
+            
+            showMessage(errorMessage, 'error');
+        });
+}
+
+// Send password reset email
+function sendPasswordReset(email) {
+    auth.sendPasswordResetEmail(email)
+        .then(() => {
+            showMessage('Password reset email sent! Check your inbox.', 'success');
+        })
+        .catch((error) => {
+            let errorMessage = 'Failed to send password reset email.';
+            
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    errorMessage = 'No account found with this email address.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Please enter a valid email address.';
+                    break;
+                default:
+                    errorMessage = error.message;
+            }
+            
+            showMessage(errorMessage, 'error');
+        });
 }
 
 // Show message function
@@ -111,24 +174,16 @@ function showMessage(message, type) {
     }
 }
 
-// Demo credentials display (remove in production)
-document.addEventListener('DOMContentLoaded', function() {
-    // Add demo credentials info
-    const container = document.querySelector('.container');
-    const demoInfo = document.createElement('div');
-    demoInfo.style.cssText = `
-        background-color: #e7f3ff;
-        border: 1px solid #b3d9ff;
-        border-radius: 4px;
-        padding: 10px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        color: #0066cc;
-    `;
-    demoInfo.innerHTML = `
-        <strong>Demo Credentials:</strong><br>
-        Email: demo@example.com<br>
-        Password: password123
-    `;
-    container.insertBefore(demoInfo, container.firstChild);
+// Check if user is already logged in
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        // User is already logged in, show welcome message
+        showMessage(`Welcome back, ${user.displayName || user.email}!`, 'success');
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+            // window.location.href = 'dashboard.html'; // Uncomment when you have a dashboard
+            console.log('User already logged in:', user);
+        }, 2000);
+    }
 });

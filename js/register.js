@@ -1,9 +1,11 @@
-// Registration form JavaScript
+// Signup form with Firebase Authentication
+let form; // Declare form variable in global scope
+
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('registerForm');
+    form = document.getElementById('registerForm');
     const messageDiv = document.getElementById('message');
     
-    // Form validation and submission
+    // Form submission handler
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -19,14 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const validation = validateForm(data);
         
         if (validation.isValid) {
-            // Simulate successful registration
-            showMessage('Registration successful! Welcome to our platform.', 'success');
-            form.reset();
+            // Register user with Firebase
+            registerUser(data);
         } else {
             showMessage(validation.message, 'error');
         }
     });
-    
     
     // Email validation
     const email = document.getElementById('email');
@@ -39,6 +39,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Real-time password confirmation validation
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+    
+    confirmPassword.addEventListener('input', function() {
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    });
+    
+    password.addEventListener('input', function() {
+        if (confirmPassword.value && password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    });
 });
 
 // Form validation function
@@ -48,10 +67,6 @@ function validateForm(data) {
     // Check required fields
     if (!data.firstName.trim()) {
         errors.push('First name is required');
-    }
-    
-    if (!data.lastName.trim()) {
-        errors.push('Last name is required');
     }
     
     if (!data.email.trim()) {
@@ -66,11 +81,15 @@ function validateForm(data) {
         errors.push('Password must be at least 6 characters long');
     }
     
+    if (!data.confirmPassword) {
+        errors.push('Please confirm your password');
+    } else if (data.password !== data.confirmPassword) {
+        errors.push('Passwords do not match');
+    }
     
     if (!data.terms) {
         errors.push('You must agree to the terms and conditions');
     }
-    
     
     return {
         isValid: errors.length === 0,
@@ -82,6 +101,68 @@ function validateForm(data) {
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+}
+
+// Register user with Firebase
+function registerUser(data) {
+    showMessage('Creating your account...', 'success');
+    
+    // Check if auth is available
+    if (!auth) {
+        showMessage('Firebase authentication is not available. Please check your configuration.', 'error');
+        return;
+    }
+    
+    console.log('Attempting to create user with email:', data.email);
+    
+    // Create user with Firebase Auth
+    auth.createUserWithEmailAndPassword(data.email, data.password)
+        .then((userCredential) => {
+            // User created successfully
+            const user = userCredential.user;
+            
+            // Update user profile with display name
+            return user.updateProfile({
+                displayName: data.firstName
+            });
+        })
+        .then(() => {
+            // Profile updated successfully
+            showMessage('Account created successfully! Redirecting to login...', 'success');
+            
+            // Clear form
+            if (form) {
+                form.reset();
+            }
+            
+            // Redirect to login page after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        })
+        .catch((error) => {
+            // Handle errors
+            let errorMessage = 'An error occurred during registration.';
+            
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    errorMessage = 'This email is already registered. Please use a different email or try logging in.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Please enter a valid email address.';
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = 'Password is too weak. Please choose a stronger password.';
+                    break;
+                case 'auth/network-request-failed':
+                    errorMessage = 'Network error. Please check your internet connection and try again.';
+                    break;
+                default:
+                    errorMessage = error.message;
+            }
+            
+            showMessage(errorMessage, 'error');
+        });
 }
 
 // Show message function
@@ -98,3 +179,14 @@ function showMessage(message, type) {
         }, 5000);
     }
 }
+
+// Check if user is already logged in
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        // User is already logged in, redirect to dashboard or main page
+        showMessage('You are already logged in. Redirecting...', 'success');
+        setTimeout(() => {
+            // window.location.href = 'dashboard.html'; // Uncomment when you have a dashboard
+        }, 2000);
+    }
+});
