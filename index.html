@@ -4,8 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Street Reads</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script type="module" src="/js/app.js" defer></script>
 </head>
 <body>
+    <main class="wrap" aria-busy="true">
+        <h1 class="logo">Street&nbsp;Reads</h1>
+        <div class="loader" role="status" aria-live="polite" aria-label="Loading">
+            <span class="sr-only">Loading…</span>
+        </div>
+        <p class="tag">Starting up…</p>
+        <noscript>
+            <p class="tag">JavaScript required. You’ll be sent to the login page.</p>
+        </noscript>
+    </main>
     
+    
+    <!-- Noscript fallback -->
+    <noscript>
+        <meta http-equiv="refresh" content="2;url=/login.html?next=/" />
+    </noscript>
 </body>
 </html>
