@@ -1,0 +1,43 @@
+[
+    {
+        "id": 1,
+        "name": "BookBox 01",
+        "address": "123 Happy St. V5Y 0L9",
+        "img": [
+            "bookbox1.jpg",
+            "bookbox2.jpg",
+            "bookbox3.jpg",
+            "bookbox4.jpg",
+            "bookbox5.jpg",
+            "bookbox6.jpg",
+            "bookbox7.jpg",
+            "bookbox8.jpg",
+            "bookbox9.jpg",
+            "bookbox10.jpg",
+            "bookbox11.jpg"
+        ],
+        "reviews": [
+            {
+                "id": 1,
+                "picture": "priscila.jpg",
+                "name": "Priscila M.",
+                "rating": 4,
+                "comment": "Loved this BookBox! Great selection and I even found a zine I wasn’t expecting. Super cool vibe and easy to use. Definitely coming back."
+            },
+            {
+                "id": 2,
+                "picture": "làura.jpg",
+                "name": "Làura F.",
+                "rating": 5,
+                "comment": "Nice spot, but it was almost empty when I got there. Would love to see more book swaps happening. Still a cool idea though!"
+            },
+            {
+                "id": 3,
+                "picture": "mie.jpg",
+                "name": "Mie",
+                "rating": 3,
+                "comment": "This little BookBox feels like a hidden treasure! I left a book I love and found one I didn’t know I needed. It made my day."
+            }
+        ]
+    }
+]
