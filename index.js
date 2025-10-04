@@ -1,10 +1,10 @@
 const apiKey = "CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI";
 
-// DOMが読み込まれてからマップを初期化
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing map...');
     
-    // マップコンテナの存在確認
+    
     const mapContainer = document.getElementById('map');
     if (!mapContainer) {
         console.error('Map container not found!');
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     console.log('Map container found');
     
-    // TomTom SDK確認
+    
     if (typeof tt === 'undefined') {
         console.error('TomTom SDK not loaded!');
         return;
