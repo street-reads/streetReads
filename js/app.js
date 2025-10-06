@@ -2,7 +2,7 @@
 
 // ---------- ROUTE SETTINGS ----------
 const LOGIN_PATH = '../pages/login.html';
-const USER_PATH = '../pages/user.html';
+const USER_PATH = '../pages/homepage.html';
 
 // ---------- SPLASH TIMING ----------
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
