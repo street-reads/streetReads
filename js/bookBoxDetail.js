@@ -1,7 +1,7 @@
 const params = new URLSearchParams(window.location.search);
 const boxId = parseInt(params.get("id")) || 1; // default = 1
 
-fetch("bookBoxData.json")
+fetch("../data/bookBoxData.json")
     .then(res => res.json())
     .then(data => {
         const box = data.find(b => b.id === boxId);
