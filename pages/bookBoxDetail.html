@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookBox Detail</title>
+    <script src="../js/bookBoxDetail.js" defer></script>
+    <link rel="stylesheet" href="../css/bookBoxDetail.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <header>
+        <h1>Street Reads</h1>
+    </header>
+
+    <main>
+        <div class="left">
+            <!-- BOOK BOX -->
+            <div class="boxDetail">
+                <div class="info">
+                    <h2 id="boxName">Loading</h2>
+                    <p id="boxAddress"></p>
+                </div>
+                <div class="fav">
+                    <p>Add to Favorites</p>
+                    <span class="fa-solid fa-heart"></span>
+                </div>
+            </div>
+            <div class="imgContainer">
+                <div class="images" id="boxImages"></div>
+            </div>
+            <p class="viewMorePosition">View more</p>
+            <!-- RATING -->
+            <p>Rate This BookBox</p>
+            <div class="rateContainer">
+                <div id="rateAvg"></div>
+            </div>
+            <!-- POP UP -->
+            <section class="modal hidden">
+                <div class="flex">
+                    <button class="btn-close">⨉</button>
+                </div>
+                <p>Do you like this bookbox?</p>
+                <input type="text" id="review">
+                <button class="btn">SEND REVIEW</button>
+            </section>
+            <div class="overlay hidden"></div>
+            <button class="btn btn-open">Add a Review</button>
+            <button class="btn">Add a Picture</button>
+            <!-- REVIEW BOX -->
+            <div class="reviewContainer">
+                <div id="reviews"></div>
+            </div>
+        </div>
+
+        <div class="right">
+            <!-- LEAVE MESSAGES -->
+            <div class="msgContainer">
+                <div id="messages"></div>
+                <p>What People are saying</p>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

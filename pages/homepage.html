@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://kit.fontawesome.com/7e5d9f596b.js" crossorigin="anonymous" defer></script>
+
+    <!-- TomTom Maps SDK -->
+    <link rel="stylesheet" type="text/css" href="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps.css">
+    <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps-web.min.js"></script>
+
+    <!-- JS -->
+    <script src="../js/homepage.js"></script>
+
+    <!-- CSS -->
+     <link rel="stylesheet" href="../css/homepage.css">
+    <title>Homepage</title>
+</head>
+<body>
+    <header>
+        <h1>Street Reads</h1>
+        <div class="header-button">
+            <i class="fa-regular fa-bell"></i>
+            <img src="https://picsum.photos/100/100?random=$" alt="">
+        </div>
+    </header>
+    <main>
+        <h2>Hello Luigi!</h2>
+        <div class="searchbar">
+            <p>Discover little Free libraries around you</p>
+            <div class="search-field">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" >
+                <i class="fa-solid fa-filter"></i>
+                <button type="submit">Add BookBox</button>
+
+                <div id="map" class="map"></div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
