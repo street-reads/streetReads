@@ -1,4 +1,5 @@
 const apiKey = "CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI";
+const firstName = document.getElementById("name")
 
 
 document.addEventListener('DOMContentLoaded', function() {
