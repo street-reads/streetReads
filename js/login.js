@@ -100,7 +100,7 @@ function loginUser(data) {
             
             // Redirect to dashboard or main page after 2 seconds
             setTimeout(() => {
-                // window.location.href = 'dashboard.html'; // Uncomment when you have a dashboard
+                window.location.href = '../pages/homepage.html';
                 console.log('User logged in:', user);
             }, 2000);
         })
