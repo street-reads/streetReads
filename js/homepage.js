@@ -1,5 +1,8 @@
 const apiKey = "CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI";
 const firstName = document.getElementById("name")
+let map;
+let markers = []; // Store all markers for management
+let latestPinLocation = null; // Store the latest pin location for Add BookBox
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -21,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('TomTom SDK loaded');
     
     try {
-        const map = tt.map({
+        map = tt.map({
             key: apiKey,
             container: 'map',
             center: [-123.10904462328836, 49.22895825651896],  // 経度, 緯度の順序（TomTom形式）
@@ -31,6 +34,17 @@ document.addEventListener('DOMContentLoaded', function() {
         map.addControl(new tt.NavigationControl());
         map.addControl(new tt.FullscreenControl());
         
+                
+        // Add click event listener for location pinning
+        map.on('click', function(e) {
+            console.log('Map clicked at:', e.lngLat);
+            const coordinates = e.lngLat;
+            addLocationPin(map, coordinates);
+        });
+        
+        // Get user's current location
+        getCurrentLocation();
+
         console.log('Map initialized successfully!');
     } catch (error) {
         console.error('Error creating map:', error);
@@ -39,6 +53,33 @@ document.addEventListener('DOMContentLoaded', function() {
     filterPopup();
     addBookboxField();
 });
+
+// Get user's current location
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const userLocation = {
+                    lng: position.coords.longitude,
+                    lat: position.coords.latitude
+                };
+                console.log('User location:', userLocation);
+                
+                // Center map on user location
+                map.setCenter([userLocation.lng, userLocation.lat]);
+                map.setZoom(15);
+                
+                // Add a special marker for user location
+                addUserLocationMarker(userLocation);
+            },
+            function(error) {
+                console.error('Error getting location:', error);
+            }
+        );
+    } else {
+        console.log('Geolocation is not supported by this browser.');
+    }
+}
 
 
 // filter 
