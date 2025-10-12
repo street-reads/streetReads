@@ -34,6 +34,10 @@
                 <div class="images" id="boxImages"></div>
             </div>
             <p class="viewMorePosition">View more</p>
+            <div class="btnContainer">
+                <button class="btn">Add a Picture</button>
+            </div>
+
             <!-- RATING -->
             <p>Rate This BookBox</p>
             <div class="rateContainer">
@@ -44,13 +48,14 @@
                 <div class="flex">
                     <button class="btn-close">⨉</button>
                 </div>
-                <p>Do you like this bookbox?</p>
-                <input type="text" id="review">
-                <button class="btn">SEND REVIEW</button>
+                <label for="review">Add a Review </label>
+                <textarea id="review"></textarea>
+                <div class="btnContainer">
+                    <button class="btn">Save</button>
+                </div>
             </section>
             <div class="overlay hidden"></div>
             <button class="btn btn-open">Add a Review</button>
-            <button class="btn">Add a Picture</button>
             <!-- REVIEW BOX -->
             <div class="reviewContainer">
                 <div id="reviews"></div>

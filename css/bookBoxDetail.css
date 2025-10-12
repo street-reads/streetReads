@@ -24,8 +24,7 @@ main {
     @media screen and (min-width: 900px) {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 5rem
-        ;
+        gap: 5rem;
     }
 }
 
@@ -91,6 +90,12 @@ main {
 
 .viewMorePosition {
     text-align: right;
+    margin: 1rem;
+}
+
+.infoContainer button {
+    display: flex;
+    justify-content: right;
 }
 
 /* RATE */
@@ -100,6 +105,11 @@ main {
 
 /* POPUP */
 .modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -107,9 +117,7 @@ main {
     width: 450px;
     padding: 1.3rem;
     min-height: 250px;
-    position: absolute;
     z-index: 2;
-    top: 20%;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 15px;
@@ -121,15 +129,18 @@ main {
     justify-content: space-between;
 }
 
-.modal input {
+.modal textarea {
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 0.9em;
     height: 8rem;
+    padding: 0.4rem;
+    background-color: #EBF2FF;
 }
 
-.modal p {
+.modal label {
     font-size: 0.9rem;
+    font-weight: bold;
     color: black;
     margin: 0.4rem 0 0.2rem;
 }
@@ -140,11 +151,16 @@ button {
     font-weight: 600;
 }
 
+.btnContainer {
+    display: flex;
+    justify-content: right;
+}
+
 .btn {
     display: inline-block;
     padding: 0.8rem 1.4rem;
     font-weight: 700;
-    background-color: #5e6375;
+    background-color: #4747D0;
     color: white;
     border-radius: 5px;
     text-align: center;
@@ -162,8 +178,7 @@ button {
     right: 10px;
     transform: none;
     padding: 0.5rem 0.7rem;
-    background: #eee;
-    border-radius: 50%;
+    background: none;
 }
 
 .overlay {
@@ -174,7 +189,7 @@ button {
     right: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, .8);
     backdrop-filter: blur(3px);
     z-index: 1;
 }
