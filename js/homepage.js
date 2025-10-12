@@ -35,4 +35,77 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
         console.error('Error creating map:', error);
     }
+
+    filterPopup();
+    addBookboxField();
 });
+
+
+// filter 
+function filterPopup() {
+    const filterBtn = document.getElementById('filterBtn');
+    const filterField = document.getElementById('filterFeild');
+    const selectAll = document.getElementById('selectAll');
+    const deselectAll = document.getElementById('deselectAll');
+    const closeFilter = document.getElementById('closeFilter'); 
+    const updateFilter = document.getElementById('updateFilter');
+
+    // open filter
+    if(filterBtn) {
+        filterBtn.addEventListener('click', function(){
+            filterField.style.display = 'block';
+        });
+    };
+
+    // close filter
+    if(closeFilter) {
+        closeFilter.addEventListener('click',function(){
+            filterField.style.display ='none';
+        });
+    };
+
+    //select all
+    if(selectAll) {
+        selectAll.addEventListener("click", function(){
+            const checkboxes = document.querySelectorAll('input[name="filters"]'); 
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true; // checkboxに修正、trueを追加
+            });
+        });
+    };
+
+    //deselect all  
+    if(deselectAll) {
+        deselectAll.addEventListener("click", function(){
+            const checkboxes = document.querySelectorAll('input[name="filters"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+    };
+};
+
+//Add BookBox
+function addBookboxField(){
+    const addBox = document.getElementById('addBox');
+    const addBookbox = document.getElementById('addBookbox');
+    const cancel = document.getElementById('cancel');
+    const addBookboxSubmit = document.getElementById('addBookboxSubmit');
+
+    // open add bookbox field
+    if(addBox) {
+        addBox.addEventListener('click', function(){
+            addBookbox.style.display = 'block';
+        });
+    };
+
+    // cancel = close add bookbox field 
+    if(cancel) {
+        cancel.addEventListener('click', function(){
+            addBookbox.style.display = 'none';
+        });
+    };
+
+}
