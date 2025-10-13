@@ -2,64 +2,51 @@ const params = new URLSearchParams(window.location.search);
 const boxId = parseInt(params.get("id")) || 1; // default = 1
 
 fetch("../data/bookBoxData.json")
-  .then(res => res.json())
-  .then(data => {
-    const box = data.find(b => b.id === boxId);
-    if (!box) {
-      document.getElementById("box-name").textContent = "BookBox not found";
-      return;
-    }
+    .then(res => res.json())
+    .then(data => {
+        const box = data.find(b => b.id === boxId);
+        if (!box) {
+            document.getElementById("box-name").textContent = "BookBox not found";
+            return;
+        }
 
-    // Fill title and address
-    document.getElementById("boxName").textContent = box.name;
-    document.getElementById("boxAddress").textContent = box.address;
+        // Fill title and address
+        document.getElementById("boxName").textContent = box.name;
+        document.getElementById("boxAddress").textContent = box.address;
 
-    // Images
-    // const imgContainer = document.getElementById("boxImages");
-    // box.img.forEach(src => {
-    //   if (src && src.trim() !== "") { 
-    //     const img = document.createElement("img");
-    //     img.src = src;
-    //     img.alt = box.name; 
-    //     imgContainer.appendChild(img);
-    //   }
-    // });
-
-
-    // Rate
-    // const rateContainer = document.getElementById("rateAvg");
-
-    // const reviewDiv = document.createElement("div");
-    // reviewDiv.classList.add("rate");
-
-    // const rateDiv = document.createElement("div");
-    // rateContainer.appendChild(rateDiv);
-
-    const stars = document.querySelectorAll('.stars i');
-    stars.forEach((star, index1) => {
-      star.addEventListener("click", () => {
-        stars.forEach((star, index2) => {
-          index1 >= index2 ? star.classList.add("active") : star.classList.remove("active");
+        // Images
+        const imgContainer = document.getElementById("boxImages");
+        box.img.forEach(src => {
+            const img = document.createElement("img");
+            img.src = src;
+            imgContainer.appendChild(img);
         });
-      });
-    });
+
+        // Rate
+        const rateContainer = document.getElementById("rateAvg");
+
+        const reviewDiv = document.createElement("div");
+        reviewDiv.classList.add("rate");
+
+        const rateDiv = document.createElement("div");
+        rateContainer.appendChild(rateDiv);
 
 
 
-    // Reviews
-    const reviewsContainer = document.getElementById("reviews");
-    box.reviews.forEach(user => {
-      const reviewDiv = document.createElement("div");
-      reviewDiv.classList.add("review");
-      reviewDiv.innerHTML = `
+        // Reviews
+        const reviewsContainer = document.getElementById("reviews");
+        box.reviews.forEach(user => {
+            const reviewDiv = document.createElement("div");
+            reviewDiv.classList.add("review");
+            reviewDiv.innerHTML = `
             <img src="${user.picture}">
             <strong>${user.name}</strong><br>
             <p>${user.comment}</p>
             `;
-      reviewsContainer.appendChild(reviewDiv);
-    });
-  })
-  .catch(err => console.error("Error loading JSON:", err));
+            reviewsContainer.appendChild(reviewDiv);
+        });
+    })
+    .catch(err => console.error("Error loading JSON:", err));
 
 const modal = document.querySelector(".modal");
 const overlay = document.querySelector(".overlay");
