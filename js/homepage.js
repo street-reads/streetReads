@@ -1,3 +1,23 @@
+//Database
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDP88zVX_yPRwOKZl_xJxqjph2GFBNuk2o",
+  authDomain: "street-reads.firebaseapp.com",
+  projectId: "street-reads",
+  storageBucket: "street-reads.firebasestorage.app",
+  messagingSenderId: "228045832951",
+  appId: "1:228045832951:web:4b6d868e05a72ab08a89f2"
+};
+
+// Firebase を初期化
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 const apiKey = "CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI";
 const firstName = document.getElementById("name")
 let map;
@@ -146,7 +166,64 @@ function addBookboxField(){
     if(cancel) {
         cancel.addEventListener('click', function(){
             addBookbox.style.display = 'none';
+            clearFrom();
         });
     };
 
+    // submit add bookbox to database
+    if(addBookboxSubmit) {
+        addBookboxSubmit.addEventListener('click', function(e){
+            e.preventDefault(); 
+            submitBookBoxToDatabase();
+        });
+    };
+
+}
+
+//Add bookbox data into database
+async function submitBookBoxToDatabase() {
+    try {
+        const nameInput = document.getElementById('boxName');
+        const addressInput = document.getElementById('boxAddress');
+        const boxImg = document.getElementById('boxImg');
+
+        if (!nameInput || !addressInput || !boxImg) {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        // img
+        let photoUrl = null;
+        if (boxImg.files && boxImg.files[0]) {
+            // Upload Img to Firebase Storage
+            photoUrl = await uploadImageToStorage(boxImg.files[0]);
+        }
+
+        const bookBoxData = {
+            name: nameInput.value.trim(),
+            address: addressInput.value.trim(),
+            photoUrl: photoUrl, 
+            averageRating:0,
+            // location: latestPinLocation, // How to get location
+            createdAt: new Date(),
+            // createdBy: auth.currentUser ? auth.currentUser.uid : 'anonymous'　//How about user ID?
+        };
+
+
+        // save to database
+        const docRef = await addDoc(collection(db, 'streetLibraries'), bookBoxData);
+        console.log(bookBoxData);
+
+        // 成功メッセージ
+        alert('BookBoxが正常に追加されました！');
+
+        // フォームを閉じてクリア
+        document.getElementById('addBookbox').style.display = 'none';
+        clearForm();
+
+
+    } catch (error) {
+        console.error('Error adding BookBox: ', error);
+        alert('Error adding BookBox: ' + error.message);
+    }
 }
