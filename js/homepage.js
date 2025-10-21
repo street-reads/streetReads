@@ -214,10 +214,10 @@ async function submitBookBoxToDatabase() {
         const docRef = await addDoc(collection(db, 'streetLibraries'), bookBoxData);
         console.log(bookBoxData);
 
-        // 成功メッセージ
-        alert('BookBoxが正常に追加されました！');
+        // success message
+        alert('success');
 
-        // フォームを閉じてクリア
+        // close the form 
         document.getElementById('addBookbox').style.display = 'none';
         clearForm();
 
