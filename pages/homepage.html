@@ -89,17 +89,19 @@
             <div id="map" class="map"></div>
         </div>
 
-<!-- Backdrop -->
+<!-- Backdrop (click to close) -->
 <div id="modalBackdrop" class="sr-backdrop" hidden></div>
 
 <!-- Add Book Box Modal -->
 <div id="addBookbox" class="sr-modal" role="dialog" aria-modal="true" aria-labelledby="srModalTitle" hidden>
     <div class="sr-card">
+        <!-- Header -->
         <div class="sr-card-head">
             <h3 id="srModalTitle">Add a Book Box</h3>
             <button class="sr-close" id="srClose" aria-label="Close modal">&times;</button>
         </div>
 
+        <!-- Body -->
         <div class="sr-card-body">
             <label class="sr-field">
                 <span class="sr-label">BookBox Name</span>
@@ -119,27 +121,44 @@
             <div class="sr-field">
                 <span class="sr-label">Pictures</span>
 
-                <!-- Upload from gallery/files (multi) -->
+                <!-- Upload from files (multi) -->
                 <input type="file" id="picture" accept="image/*" multiple>
 
-                <!-- Use device camera (single shot each time you tap) -->
-                <label class="sr-pill as-label" for="cameraCapture">
-                    <i class="fa-solid fa-camera"></i> Take a picture
-                </label>
-                <input id="cameraCapture" type="file" accept="image/*" capture="environment" hidden>
+                <!-- Open the device camera in-browser (works on laptop/desktop over HTTPS or localhost) -->
+                <button type="button" id="srOpenCamera" class="sr-pill" style="margin-top:8px;">
+                    <i class="fa-solid fa-camera"></i> Use device camera
+                </button>
 
                 <!-- Previews + chips -->
                 <div id="srPreview" class="sr-preview"></div>
                 <div id="srChips" class="sr-chips"></div>
+
+                <!-- Camera panel -->
+                <div id="srCameraPanel" class="sr-camera" hidden>
+                    <div class="sr-camera-bar">
+                        <button type="button" id="srCloseCam" class="sr-ghost">&times; Close</button>
+                    </div>
+                    <div class="sr-camera-view">
+                        <video id="srVideo" playsinline autoplay muted></video>
+                    </div>
+                    <div class="sr-camera-actions">
+                        <button type="button" id="srSnap" class="sr-primary">
+                            <i class="fa-solid fa-circle-dot"></i> Capture
+                        </button>
+                    </div>
+                    <canvas id="srCanvas" hidden></canvas>
+                </div>
             </div>
         </div>
 
+        <!-- Footer -->
         <div class="sr-card-foot">
             <button class="cancel" id="cancel">Cancel</button>
             <button class="add-bookbox-submit" id="addBookboxSubmit">Add Box</button>
         </div>
     </div>
 </div>
+
     </main>
 </body>
 </html>
