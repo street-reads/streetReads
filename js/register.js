@@ -1,4 +1,4 @@
-// Signup form with Firebase Authentication
+// Signup form with Firebase Authentication and Firestore
 let form; // Declare form variable in global scope
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -113,13 +113,26 @@ function registerUser(data) {
         return;
     }
     
+    // Check if Firestore is available
+    if (!firebase.firestore) {
+        showMessage('Firebase Firestore is not available. Please check your configuration.', 'error');
+        return;
+    }
+    
+    const db = firebase.firestore();
+    
     console.log('Attempting to create user with email:', data.email);
+    
+    let userId;
     
     // Create user with Firebase Auth
     auth.createUserWithEmailAndPassword(data.email, data.password)
         .then((userCredential) => {
             // User created successfully
             const user = userCredential.user;
+            userId = user.uid;
+            
+            console.log('User created with UID:', userId);
             
             // Update user profile with display name
             return user.updateProfile({
@@ -127,7 +140,26 @@ function registerUser(data) {
             });
         })
         .then(() => {
-            // Profile updated successfully
+            console.log('Profile updated, now saving to Firestore...');
+            
+            // Save user data to Firestore
+            return db.collection('users').doc(userId).set({
+                displayName: data.firstName,
+                email: data.email,
+                password: data.password, // Note: Storing passwords in database is not recommended for security
+                favorites: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updateAt: firebase.firestore.FieldValue.serverTimestamp(),
+                userId: userId,
+                libraryId: '',
+                location: new firebase.firestore.GeoPoint(0, 0), // Default location
+                locationName: data.country || '',
+                photoURL: ''
+            });
+        })
+        .then(() => {
+            // Data saved successfully
+            console.log('User data saved to Firestore successfully');
             showMessage('Account created successfully! Redirecting to login...', 'success');
             
             // Clear form
@@ -142,6 +174,7 @@ function registerUser(data) {
         })
         .catch((error) => {
             // Handle errors
+            console.error('Registration error:', error);
             let errorMessage = 'An error occurred during registration.';
             
             switch (error.code) {
