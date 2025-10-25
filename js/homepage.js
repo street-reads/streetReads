@@ -159,6 +159,55 @@ function addBookboxField(){
     if(addBox) {
         addBox.addEventListener('click', function(){
             addBookbox.style.display = 'block';
+
+            // attach auto-location listener when form is opened
+            const addressInput = document.getElementById('boxAddress');
+            if (addressInput && !addressInput.dataset.autolisten) {
+                addressInput.dataset.autolisten = 'true';
+
+                // on focus or click, try to get current geolocation and reverse-geocode
+                const autofill = async function() {
+                    if (!navigator.geolocation) {
+                        console.log('Geolocation not supported');
+                        return;
+                    }
+
+                    addressInput.disabled = true; // prevent user typing while resolving
+                    addressInput.placeholder = 'Finding your location...';
+
+                    navigator.geolocation.getCurrentPosition(async (position) => {
+                        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+                        latestPinLocation = coords; // save for later
+
+                        // center map near the location
+                        try {
+                            if (map) {
+                                map.setCenter([coords.lng, coords.lat]);
+                                map.setZoom(15);
+                            }
+                        } catch (error) {
+                            console.warn('Can not find your location', error);
+                        }
+
+                        // reverse geocode to a human readable address
+                        const readableAddress = await reverseGeocode(coords.lat, coords.lng);
+                        if (readableAddress) {
+                            addressInput.value = readableAddress;
+                        }
+
+                        addressInput.disabled = false;
+                        addressInput.placeholder = '';
+
+                    }, (error) => {
+                        console.error('Geolocation error:', error);
+                        addressInput.disabled = false;
+                        addressInput.placeholder = '';
+                    }, { enableHighAccuracy: true, timeout: 10000 });
+                };
+
+                addressInput.addEventListener('focus', autofill);
+                addressInput.addEventListener('click', autofill);
+            }
         });
     };
 
@@ -178,6 +227,32 @@ function addBookboxField(){
         });
     };
 
+}
+
+
+// reverse geocode helper (TomTom)
+async function reverseGeocode(lat, lng) {
+    try {
+        const url = `https://api.tomtom.com/search/2/reverseGeocode/${lat}%2C${lng}.json?key=${apiKey}&limit=1`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data && data.addresses && data.addresses.length > 0) {
+            // TomTom returns address info in data.addresses[0].address
+            const addr = data.addresses[0].address;
+            // build human readable address
+            const parts = [];
+            if (addr.municipality) parts.push(addr.municipality);
+            if (addr.streetName) parts.push(addr.streetName + (addr.streetNumber ? ` ${addr.streetNumber}` : ''));
+            if (addr.countrySubdivision) parts.push(addr.countrySubdivision);
+            if (addr.country) parts.push(addr.country);
+            const human = parts.join(', ');
+            return human || (addr.freeformAddress || null);
+        }
+        return null;
+    } catch (err) {
+        console.error('reverseGeocode error', err);
+        return null;
+    }
 }
 
 //Add bookbox data into database
@@ -203,10 +278,9 @@ async function submitBookBoxToDatabase() {
             name: nameInput.value.trim(),
             address: addressInput.value.trim(),
             photoUrl: photoUrl, 
+            //Take photo or add img?
             averageRating:0,
-            // location: latestPinLocation, // How to get location
             createdAt: new Date(),
-            // createdBy: auth.currentUser ? auth.currentUser.uid : 'anonymous'　//How about user ID?
         };
 
 
