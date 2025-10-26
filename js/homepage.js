@@ -18,6 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+
 const apiKey = "CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI";
 const firstName = document.getElementById("name")
 let map;
@@ -64,6 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Get user's current location
         getCurrentLocation();
+        // load saved BookBoxes as markers on the main map
+        loadBookBoxes();
 
         console.log('Map initialized successfully!');
     } catch (error) {
@@ -288,6 +291,9 @@ async function submitBookBoxToDatabase() {
         const docRef = await addDoc(collection(db, 'streetLibraries'), bookBoxData);
         console.log(bookBoxData);
 
+        // refresh markers on the map to include the new BookBox
+        await loadBookBoxes();
+
         // success message
         alert('success');
 
@@ -300,4 +306,107 @@ async function submitBookBoxToDatabase() {
         console.error('Error adding BookBox: ', error);
         alert('Error adding BookBox: ' + error.message);
     }
+}
+
+// Forward geocode: address -> { lat, lon }
+async function geocodeAddress(address) {
+    try {
+        const url = `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(address)}.json?key=${apiKey}&limit=1`;
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (data && data.results && data.results.length > 0) {
+            return data.results[0].position; // { lat, lon }
+        }
+        return null;
+    } catch (error) {
+        console.error('geocodeAddress error', error);
+        return null;
+    }
+}
+
+// Load saved bookBoxes from Firestore and add markers to the main `map`.
+async function loadBookBoxes() {
+    try {
+        // remove existing markers first to avoid duplicates
+        clearMarkers();
+        const snapshot = await getDocs(collection(db, 'streetLibraries'));
+        snapshot.forEach(async (doc) => {
+            const data = doc.data();
+
+            // Try several fields for coordinates, or geocode from address as a fallback
+            let lat = null, lng = null;
+            if (data.location && typeof data.location.lat === 'number' && typeof data.location.lng === 'number') {
+                lat = data.location.lat; lng = data.location.lng;
+            } else if (data.location && typeof data.location.latitude === 'number' && typeof data.location.longitude === 'number') {
+                lat = data.location.latitude; lng = data.location.longitude;
+            } else if (data.address) {
+                const pos = await geocodeAddress(data.address);
+                if (pos) { lat = pos.lat; lng = pos.lon; }
+            }
+            if (lat !== null && lng !== null) {
+                addMarkerForBookbox(doc.id, data, lat, lng);
+            } else {
+                console.warn('No coords for bookbox', doc.id);
+            }
+        });
+    } catch (err) {
+        console.error('loadBookBoxes error', err);
+    }
+}
+
+function addMarkerForBookbox(id, data, lat, lng) {
+    if (!map) return;
+
+    // create a custom DOM marker so CSS (.bookbox-marker) styles apply
+    const element = document.createElement('div');
+    element.className = 'bookbox-marker';
+    // insert image from src folder as the pin graphic (path relative to pages/homepage.html)
+    const img = document.createElement('img');
+    img.src = '../src/location_pin.png';
+    img.alt = 'pin';
+    img.style.width = '28px';
+    img.style.height = '28px';
+    img.style.display = 'block';
+    img.style.pointerEvents = 'none'; // allow clicks to reach marker element
+    element.appendChild(img);
+
+    const marker = new tt.Marker({ element: element, anchor: 'bottom' })
+        .setLngLat([lng, lat])
+        .addTo(map);
+
+    // keep track so we can remove later
+    markers.push(marker);
+
+    // build popup content safely
+    const parts = [`<strong>${escapeHtml(data.name || 'No name')}</strong>`];
+    if (data.photoUrl) parts.push(`<img src="${escapeHtml(data.photoUrl)}" style="max-width:200px;display:block;margin-top:6px;" />`);
+    if (data.address) parts.push(`<div style="margin-top:4px">${escapeHtml(data.address)}</div>`);
+
+    const popup = new tt.Popup({ offset: 25 }).setHTML(parts.join(''));
+    marker.setPopup(popup);
+
+    // center map when marker element is clicked
+    element.addEventListener('click', () => {
+        try {
+            map.setCenter([lng, lat]);
+            map.setZoom(15);
+        } catch (e) {
+            console.warn('Could not center map on click', e);
+        }
+    });
+}
+
+function clearMarkers() {
+    if (!markers || markers.length === 0) return;
+    markers.forEach(m => {
+        try { m.remove(); } catch (e) { /* ignore */ }
+    });
+    markers = [];
+}
+
+function escapeHtml(s = '') {
+    return String(s).replace(/[&<>"']/g, function(c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
 }
