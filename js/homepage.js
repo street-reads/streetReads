@@ -384,15 +384,20 @@ function addMarkerForBookbox(id, data, lat, lng) {
     if (data.address) parts.push(`<div style="margin-top:4px">${escapeHtml(data.address)}</div>`);
 
     const popup = new tt.Popup({ offset: 25 }).setHTML(parts.join(''));
+    // set popup coordinates so it can be shown programmatically
+    popup.setLngLat([lng, lat]);
     marker.setPopup(popup);
 
-    // center map when marker element is clicked
+    // center map and open popup when marker element is clicked
     element.addEventListener('click', () => {
         try {
+            // open the popup at this marker
+            popup.addTo(map);
+            // center and zoom the map
             map.setCenter([lng, lat]);
             map.setZoom(15);
-        } catch (e) {
-            console.warn('Could not center map on click', e);
+        } catch (error) {
+            console.warn('Could not open popup or center map on click', error);
         }
     });
 }
@@ -400,7 +405,7 @@ function addMarkerForBookbox(id, data, lat, lng) {
 function clearMarkers() {
     if (!markers || markers.length === 0) return;
     markers.forEach(m => {
-        try { m.remove(); } catch (e) { /* ignore */ }
+        try { m.remove(); } catch (error) { /* ignore */ }
     });
     markers = [];
 }
