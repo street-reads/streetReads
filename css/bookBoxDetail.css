@@ -42,6 +42,7 @@ main {
     flex-direction: row;
     align-items: end;
     gap: 1rem;
+    color: #4747D0;
 }
 
 /* IMAGE */
@@ -100,6 +101,11 @@ main {
     gap: 1rem;
 }
 
+.fa-star {
+    color: white;
+    -webkit-text-stroke: 3px #4747D0;
+}
+
 .stars {
     font-size: 1.3rem;
     color: #e6e6e6;
@@ -140,6 +146,21 @@ main {
     justify-content: space-between;
 }
 
+.modal form {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.modal input {
+    background-color: #EBF2FF;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.9em;
+    padding: 0.4rem;
+    height: 2rem;
+}
+
 .modal textarea {
     border: 1px solid #ddd;
     border-radius: 5px;
@@ -149,11 +170,23 @@ main {
     background-color: #EBF2FF;
 }
 
+.form-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
 .modal label {
     font-size: 0.9rem;
     font-weight: bold;
     color: black;
     margin: 0.4rem 0 0.2rem;
+}
+
+.modal .stars {
+
+    border: none;
+    text-align: center;
+    margin-top: 20px;
 }
 
 button {
@@ -230,4 +263,38 @@ button {
 
 .review strong {
     padding-bottom: 0.5rem;
+}
+
+/* average stars */
+#rateAvg i {
+    font-size: 1.4rem;
+    color: #4747D0;
+}
+
+#rateAvg i.fa-solid {
+    color: #4747D0;
+}
+
+#rateAvg i.fa-regular {
+    color: #ccc;
+    /* 空の星はグレー */
+}
+
+#rateAvg span {
+    color: #333;
+    font-weight: 500;
+    margin-left: 4px;
+}
+
+
+/* CHAT */
+#chatContainer {
+    overflow-y: auto;
+
+    margin-top: 30px;
+    margin-bottom: 30px;
+    padding: 40px;
+    border: solid 1px black;
+    border-radius: 10px;
+    background: lightgray;
 }

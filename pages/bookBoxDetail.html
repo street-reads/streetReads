@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BookBox Detail</title>
-    <script src="../js/bookBoxDetail.js" defer></script>
+    <script type="module" src="../js/bookBoxDetail.js"></script>
     <link rel="stylesheet" href="../css/bookBoxDetail.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
@@ -31,19 +31,20 @@
                 </div>
             </div>
             <div class="imgContainer">
-                <div class="images" id="boxImages"> <img src="https://picsum.photos/300/400?random=1" alt=""> <img
-                        src="https://picsum.photos/300/400?random=2" alt=""> <img
-                        src="https://picsum.photos/300/400?random=3" alt=""> <img
-                        src="https://picsum.photos/300/400?random=4" alt=""> <img
-                        src="https://picsum.photos/300/400?random=5" alt=""> <img
-                        src="https://picsum.photos/300/400?random=6" alt=""> <img
-                        src="https://picsum.photos/300/400?random=7" alt=""> <img
-                        src="https://picsum.photos/300/400?random=8" alt=""> <img
-                        src="https://picsum.photos/300/400?random=9" alt=""> <img
-                        src="https://picsum.photos/300/400?random=10" alt=""> <img
-                        src="https://picsum.photos/300/400?random=11" alt=""> </div>
+                <div class="images" id="boxImages">
+                    <!-- <img src="https://picsum.photos/300/400?random=1" alt="">
+                    <img src="https://picsum.photos/300/400?random=2" alt="">
+                    <img src="https://picsum.photos/300/400?random=3" alt="">
+                    <img src="https://picsum.photos/300/400?random=4" alt="">
+                    <img src="https://picsum.photos/300/400?random=5" alt="">
+                    <img src="https://picsum.photos/300/400?random=6" alt="">
+                    <img src="https://picsum.photos/300/400?random=7" alt="">
+                    <img src="https://picsum.photos/300/400?random=8" alt="">
+                    <img src="https://picsum.photos/300/400?random=9" alt="">
+                    <img src="https://picsum.photos/300/400?random=10" alt="">
+                    <img src="https://picsum.photos/300/400?random=11" alt=""> -->
+                </div>
             </div>
-            <p class="viewMorePosition">View more</p>
             <div class="btnContainer">
                 <button class="btn">Add a Picture</button>
             </div>
@@ -52,9 +53,14 @@
             <div class="rateBox">
                 <p>Rate This BookBox</p>
                 <div class="rateContainer">
-                    <div class="stars" id="rateAvg"> <i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"></i> <i
-                            class="fa-solid fa-star"></i> </div> <button class="btn btn-open">Add a Review</button>
+                    <div class="starsAvg" id="rateAvg">
+                        <!-- <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i> -->
+                    </div>
+                    <button class="btn btn-open">Add a Review</button>
                 </div>
             </div>
             <!-- POP UP -->
@@ -62,11 +68,26 @@
                 <div class="flex">
                     <button class="btn-close">⨉</button>
                 </div>
-                <label for="review">Add a Review </label>
-                <textarea id="review"></textarea>
-                <div class="btnContainer">
-                    <button class="btn">Save</button>
-                </div>
+                <form action="submit" method="post" name="form" id="form" onsubmit="submitForm()">
+                    <p for="review" class="form-title">Add a Review </p>
+                    
+                    <label for="reviewerName">Name</label>
+                    <input type="text" id="reviewerName">
+                    
+                    <label for="reviewText">Review</label>
+                    <textarea id="reviewText"></textarea>
+                    
+                    <div class="stars" id="rating">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div class="btnContainer">
+                        <button type="submit" class="btn">Send</button>
+                    </div>
+                </form>
             </section>
             <div class="overlay hidden"></div>
             <!-- <button class="btn btn-open">Add a Review</button> -->
@@ -78,9 +99,18 @@
 
         <div class="right">
             <!-- LEAVE MESSAGES -->
-            <div class="msgContainer">
+            <p>What People are saying</p>
+
+            <div id="chatContainer">
                 <div id="messages"></div>
-                <p>What People are saying</p>
+
+                <div id="chatInputArea">
+                    <input type="text" id="chatInput" />
+                    <button id="sendBtn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <i class="fa-solid fa-paperclip" id="attachImg"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </main>
