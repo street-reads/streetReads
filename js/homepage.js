@@ -18,8 +18,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-
-const apiKey = "CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI";
+// TomTom map
+const apiKey = "pVXFiErFkqfRMAZQNIY9dGlx3RKIMfMo";
 const firstName = document.getElementById("name")
 let map;
 let markers = []; // Store all markers for management
