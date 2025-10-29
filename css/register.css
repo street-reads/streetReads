@@ -7,7 +7,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: white;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -21,7 +21,7 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     padding: 40px;
     width: 100%;
-    max-width: 450px;
+    max-width: 60%;
     position: relative;
 }
 
@@ -32,15 +32,24 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: white;
     border-radius: 16px 16px 0 0;
 }
 
 h1 {
     text-align: center;
-    color: #2d3748;
+    color: #D14753;
+    margin-bottom: 6px;
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+h2{
+    text-align: center;
+    color: #4747D0;
     margin-bottom: 32px;
-    font-size: 28px;
+    font-size: 38px;
     font-weight: 700;
     letter-spacing: -0.5px;
 }
@@ -54,13 +63,32 @@ h1 {
     margin-bottom: 24px;
 }
 
+.logo-section {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 88px;
+    height: 61px;
+    background-image: url('/src/206f9b18760fe54ba2f732f01f4ef6fb06e2774e.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
 label {
+    color: #293344;
     display: block;
     margin-bottom: 8px;
-    color: #4a5568;
-    font-weight: 600;
     font-size: 14px;
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
@@ -73,7 +101,7 @@ input[type="password"] {
     border-radius: 12px;
     font-size: 16px;
     transition: all 0.3s ease;
-    background: #f7fafc;
+    background: #EBF2FF;
 }
 
 input[type="text"]:focus,
@@ -114,7 +142,7 @@ input[type="password"]:focus {
 }
 
 .submit-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #4747D0;
     color: white;
     padding: 16px 24px;
     border: none;
@@ -145,14 +173,13 @@ input[type="password"]:focus {
 
 .form-footer p {
     margin-bottom: 12px;
-    color: #718096;
+    color: black;
     font-size: 14px;
 }
 
 .form-footer a {
     color: #667eea;
     text-decoration: none;
-    font-weight: 600;
     transition: color 0.3s ease;
 }
 

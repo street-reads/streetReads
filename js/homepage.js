@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     try {
-        const map = tt.map({
+        map = tt.map({
             key: apiKey,
             container: mapContainer,
             center: [-123.10904462328836, 49.22895825651896],
