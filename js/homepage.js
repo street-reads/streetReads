@@ -1,6 +1,7 @@
 // --- Firebase init (ADD THIS) ---
 import {
     getFirestore,
+    getDocs,
     collection,
     addDoc,
     updateDoc,
@@ -672,4 +673,74 @@ function addBookboxField() {
             alert(err?.message || 'Failed to save. Check console.');
         }
     });
+}
+
+//Search bookbox
+const searchInput = document.getElementById('search-text') ;
+const searchBtn = document.getElementById('searchBtn'); 
+
+if (searchBtn) {
+  searchBtn.addEventListener('click', searchBookboxByAddress);
+}
+
+async function searchBookboxByAddress() {
+  const q = (searchInput?.value || '').trim().toLowerCase();
+  if (!q) {
+    alert('Please enter a street address to search.');
+    return;
+  }
+
+  try {
+    // use the collection store BookBoxes in:
+    const col = collection(db, 'streetLibraries');
+    const snapshot = await getDocs(col);
+
+    const results = snapshot.docs.filter(doc => {
+      const addr = doc.data()?.address;
+      return typeof addr === 'string' && addr.toLowerCase().includes(q);
+    });
+
+    if (results.length === 0) {
+      alert('No book boxes found. You can add new bookbox!');
+      return;
+    }
+
+    // Move map to the first match (or iterate)
+    results.forEach(doc => {
+      const data = doc.data();
+      // normalize location field
+      const loc = data.location;
+      if (loc && (typeof loc.latitude === 'number' || typeof loc.lat === 'number')) {
+        // GeoPoint (latitude/longitude) or {lat,lng}
+        const lat = loc.latitude ?? loc.lat;
+        const lng = loc.longitude ?? loc.lng;
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          // use your map instance variable (appMap) to center
+          if (appMap && typeof appMap.easeTo === 'function') {
+            appMap.easeTo({ center: [lng, lat], zoom: 15, duration: 600 });
+          } else if (map && typeof map.setCenter === 'function') {
+            map.setCenter([lng, lat]);
+            map.setZoom(15);
+          }
+        }
+      } else if (data.address) {
+        // fallback: forward geocode then move (optional)
+        // const pos = await geocodeAddress(data.address);
+        // appMap.easeTo({ center: [pos.lng, pos.lat], zoom: 15 });
+      }
+    });
+  } catch (err) {
+    console.error('Search error', err);
+    alert('Search failed');
+  }
+    // clear the search input and optionally focus it again
+    try {
+        if (searchInput && 'value' in searchInput) {
+            searchInput.value = '';
+            if (typeof searchInput.focus === 'function') searchInput.focus();
+        }
+    } catch (e) {
+        
+    }
+
 }
