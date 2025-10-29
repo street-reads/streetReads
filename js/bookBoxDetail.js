@@ -85,3 +85,55 @@ const openModal = function () {
 // open modal event
 openModalBtn.addEventListener("click", openModal);
 
+// --- Swap featured image when a thumbnail is clicked ---
+(function attachThumbSwap(){
+  const featured = document.getElementById('featuredImg');
+  const thumbs = document.getElementById('boxImages');
+  if (!featured || !thumbs) return;
+  thumbs.addEventListener('click', (e) => {
+    const img = e.target.closest('img');
+    if (!img) return;
+    const old = featured.src;
+    featured.src = img.src;
+    // optional: swap thumb with previous featured (keeps grid lively)
+    img.src = old;
+  });
+})();
+
+// --- Simple chat input (adds to #messages) ---
+(function attachChatInput(){
+  const list = document.getElementById('messages');
+  const ta = document.getElementById('chatText');
+  const send = document.getElementById('sendBtn');
+  if (!list || !ta || !send) return;
+
+  function addMessage(text){
+    const item = document.createElement('div');
+    item.className = 'chatItem';
+    const when = new Date().toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    item.innerHTML = `
+      <div class="avatar"></div>
+      <div>
+        <div class="who">You</div>
+        <div class="text">${text}</div>
+      </div>
+      <div class="when">${when}</div>
+    `;
+    list.appendChild(item);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  send.addEventListener('click', () => {
+    const text = ta.value.trim();
+    if(!text) return;
+    addMessage(text);
+    ta.value = '';
+    ta.style.height = '44px';
+  });
+
+  // autosize
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  });
+})();
