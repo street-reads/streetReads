@@ -1,150 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>User Profile</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="../css/user-profile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="../css/user-profile.css" />
 </head>
+
 <body>
 
-    <header>
-        <h1>Street Reads</h1>
-        <div class="header-button">
-            <i class="fa-regular fa-bell"></i>
-            <!-- <img src="https://picsum.photos/100/100?random=$" alt=""> -->
+  <!-- Header like screenshot -->
+  <header class="sr-header">
+    <div class="wrap">
+      <h1 class="brand">Street Reads</h1>
+      <div class="header-right">
+        <button class="pill small">
+          <i class="fa-solid fa-circle-question"></i>&nbsp;Help
+        </button>
+        <div class="avatar" aria-label="Your profile"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: Profile Card -->
+    <section class="card profile-card">
+      <div class="profile-head">
+        <div class="photo-wrap">
+          <img id="profile-photo" class="photo" src="https://i.pravatar.cc/160?img=12" alt="Profile photo" />
+          <button class="icon-btn edit"><i class="fa-solid fa-pen"></i></button>
         </div>
-    </header>
 
-  <main>
-    <div class="user-profile-main-wrapper">
-
-      <section class="user-profile">
-        <div class="profile-top">
-          <div class="profile-photo-box">
-            <img src="" class="profile-photo" id="profile-photo">
-            <i class="fa-solid fa-pen"></i>
+        <div class="identity">
+          <h2 class="display-name" id="display-name">Luigi</h2>
+          <div class="muted small">
+            <span id="number-of-post">10</span> Reviews
           </div>
-          <div class="top-info">
-            <h2 class="display-name" id="display-name">Luigi</h2>
-            
-            <p class="number-of-post" id="number-of-post">847 posts</p>
+        </div>
+      </div>
+
+      <div class="info-table">
+        <div class="row">
+          <div class="label">Name</div>
+          <div class="value display-name">Luigi</div>
+        </div>
+        <div class="row">
+          <div class="label">Email</div>
+          <div class="value" id="email">Luigi@gmail.com</div>
+        </div>
+        <div class="row">
+          <div class="label">Location</div>
+          <div class="value" id="current-location">West End,<br />Vancouver</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="privacy">
+        <h3 class="section-title">Privacy &amp; Security</h3>
+
+        <div class="row">
+          <div class="label">Password</div>
+          <div class="value password-wrap">
+            <span id="password">••••••</span>
+            <button class="icon-btn" id="toggle-eye" aria-label="Toggle password">
+              <i class="fa-solid fa-eye"></i>
+              <i class="fa-solid fa-eye-slash"></i>
+            </button>
           </div>
-        </div> <!-- profile-top -->
+        </div>
 
-        <div class="personal-info">
-          <p class="title-name">name</p>
-          <p class="display-name" id="display-name">${user-profile}</p>
-          <p class="title-email">Email</p>
-          <p class="email" id="email">Luigi@gmail.com</p>
-          <p class="title-location">Location</p>
-          <p class="current-location" id="current-location">Vancouver, BC</p>
-        </div> <!-- personal-info -->
+        <div class="row">
+          <div class="label">Delete Account</div>
+          <div class="value">
+            <button class="icon-btn danger" title="Delete" id="trash-icon">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      </div>
 
-        <div class="privacy-security">
-          <h3 class="privacy-security-title">Privacy & Security</h3>
-          <p>Password</p>
-          <p class="password" id="password">abc</p>
-          <span>
-            <i class="fa-solid fa-eye"></i>
-            <i class="fa-solid fa-eye-slash"></i>
-          </span>
-          <p>Delete Account</p>
-          <span class="trash-icon"><i class="fa-solid fa-trash-can" id="trash-icon"></i></span>
-        </div> <!--  privacy-security -->
+      <div class="logout">
+        <button class="btn" id="log-out-btn">Log out</button>
+      </div>
+    </section>
 
-        <button class="log-out-btn" id="log-out-btn">Log Out</button>
-          
-      </section>
+    <!-- RIGHT: Favourites -->
+    <section class="card panel">
+      <h2 class="panel-title">My Favourite Book Boxes</h2>
 
-      <section class="favorite-bookbox">
+      <!-- scroll area of favourite cards, your JS fills #favorite-box-info -->
+      <div class="grid-scroll" id="favorite-box-info">
+        <!-- JS inserts .mini-card blocks here -->
+        <!-- Example (kept for reference):
+        <div class="mini-card">
+          <div class="thumb"></div>
+          <div class="meta">
+            <div class="name">Book Box 1</div>
+            <div class="muted small"><i class="fa-solid fa-location-dot"></i>&nbsp;Location</div>
+          </div>
+        </div>
+        -->
+      </div>
+    </section>
 
-            <h2>My Favourite Book Box</h3>
-            <!-- <div class="search-section">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <form action="#" method="get">
-                  <input type="search" name="search" id="search-favorite"  placeholder="Search">
-                </form>
-            </div> -->
+    <!-- RIGHT: Contributions -->
+    <section class="card panel">
+      <h2 class="panel-title">My Contributions</h2>
 
-            <!-- each boxes added by JavaScript later -->
-            <div class="book-box">
-              <div class="favorite-box-info" id="favorite-box-info">
-                <!-- <img src="map-image.png">
-                <div class="box-detail" id="box-detail">
-                  <p>book box name</p>
-                    <div class="location-info">
-                      <i class="fa-solid fa-location-dot"></i>
-                      <p>location</p>
-                    </div>
-                </div> -->
-            </div> 
-              <!-- <div class="book-box-info">
-                <img src="map-image.png">
-                <div class="box-detail">
-                  <p>book box name</p>
-                    <div class="location-info">
-                      <i class="fa-solid fa-location-dot"></i>
-                      <p>location</p>
-                    </div>
-                </div>
-            </div> class book-box -->
-        
-      </section>
+      <div class="stats">
+        <div class="stat">
+          <div class="big" id="added-box">14</div>
+          <div class="muted">Added Boxes</div>
+        </div>
+        <div class="stat">
+          <div class="big" id="review-number">10</div>
+          <div class="muted">Reviews</div>
+        </div>
+      </div>
 
-      <section class="contributions">
-
-          <h2>My Contributions</h3>
-          <div class="summary">
-            <div class="added-box">
-              <p class="added-box" id="added-box">14</p>
-              <p>Added Boxes</p>
-            </div>
-            <div class="review">
-              <p class="review-number" id="review-number">6</p>
-              <p>Reviews</p>
-            </div>
-          </div> <!-- summary -->
-
-          <h3>Added Boxes</h3>
-          <div class="added-box-info" id="added-box-info">
-            <!-- each boxes added by JavaScript later -->
-            <!-- <div class="contribution-box"> -->
-              <!-- <div class="book-box-info">
-                <img src="map-image.png">
-                <div class="box-detail">
-                  <p>book box name</p>
-                    <div class="location-info">
-                      <i class="fa-solid fa-location-dot"></i>
-                      <p>location</p>
-                    </div>
-                </div>
-              </div> -->
-            <!-- </div>  contribution-box -->
-
-            <!-- <div class="contribution-box">
-              <div class="book-box-info">
-                <img src="map-image.png">
-                <div class="box-detail">
-                  <p>book box name</p>
-                    <div class="location-info">
-                      <i class="fa-solid fa-location-dot"></i>
-                      <p>location</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>  contribution-box -->
-        
-      </section>
-
-
-    </div>  <!-- user-profile-main-wrapper -->
+      <h3 class="sub-title">Added Boxes</h3>
+      <!-- scroll area; your JS fills #added-box-info -->
+      <div class="grid-scroll" id="added-box-info">
+        <!-- JS inserts .mini-card blocks (see CSS below) -->
+      </div>
+    </section>
   </main>
 
   <script type="module" src="../js/user-profile.js"></script>
 </body>
-</html>
 
-<!-- display favorite -->
+</html>
