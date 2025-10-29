@@ -6,11 +6,11 @@
     <script src="https://kit.fontawesome.com/7e5d9f596b.js" crossorigin="anonymous" defer></script>
 
     <!-- TomTom Maps SDK -->
-    <link rel="stylesheet" type="text/css" href="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps.css">
-    <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps-web.min.js"></script>
+    <link rel="stylesheet" href="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps.css">
+    <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps-web.min.js" defer></script>
 
     <!-- JS -->
-    <script src="../js/homepage.js"></script>
+    <script type="module" src="../js/homepage.js" defer></script>
 
     <!-- CSS -->
      <link rel="stylesheet" href="../css/homepage.css">
@@ -89,26 +89,77 @@
             <div id="map" class="map"></div>
         </div>
 
-        <!-- Add BookBox Field -->
-         <div class="add-bookbox" id="addBookbox">
-            <h3>Add a Book Box</h3>
-            <label for="boxName">
-                BookBox Name
-                <input type="text" name="boxName" id="boxName">
-            </label>
-            <label for="address">
-                Address
-                <input type="text" name="address" id="address">
-            </label>
-            <label for="picture">
-                <input type="file" name="picture" id="picture">
+<!-- Backdrop (click to close) -->
+<div id="modalBackdrop" class="sr-backdrop" hidden></div>
+
+<!-- Add Book Box Modal -->
+<div id="addBookbox" class="sr-modal" role="dialog" aria-modal="true" aria-labelledby="srModalTitle" hidden>
+    <div class="sr-card">
+        <!-- Header -->
+        <div class="sr-card-head">
+            <h3 id="srModalTitle">Add a Book Box</h3>
+            <button class="sr-close" id="srClose" aria-label="Close modal">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div class="sr-card-body">
+            <label class="sr-field">
+                <span class="sr-label">BookBox Name</span>
+                <input type="text" id="boxName" class="sr-input" placeholder="e.g., Cedar Grove Little Library">
             </label>
 
-            <div class="add-bookbox-bottom-buttons">
-                <button class="cancel" id="cancel">Cancel</button>
-                <button class="add-bookbox-submit" id="addBookboxSubmit">Add Box</button>
+            <label class="sr-field">
+                <span class="sr-label">Address</span>
+                <div class="sr-input-row">
+                    <input type="text" name="address" id="address" list="addressSuggestions" class="sr-input" placeholder="Type an address or use my location">
+                    <datalist id="addressSuggestions"></datalist>
+                    <button type="button" id="useLocation" class="sr-pill">
+                        <i class="fa-solid fa-location-arrow"></i> Use my location
+                    </button>
+                </div>
+            </label>
+
+            <div class="sr-field">
+                <span class="sr-label">Pictures</span>
+
+                <!-- Upload from files (multi) -->
+                <input type="file" id="picture" accept="image/*" multiple>
+
+                <!-- Open the device camera in-browser (works on laptop/desktop over HTTPS or localhost) -->
+                <button type="button" id="srOpenCamera" class="sr-pill" style="margin-top:8px;">
+                    <i class="fa-solid fa-camera"></i> Use device camera
+                </button>
+
+                <!-- Previews + chips -->
+                <div id="srPreview" class="sr-preview"></div>
+                <div id="srChips" class="sr-chips"></div>
+
+                <!-- Camera panel -->
+                <div id="srCameraPanel" class="sr-camera" hidden>
+                    <div class="sr-camera-bar">
+                        <button type="button" id="srCloseCam" class="sr-ghost">&times; Close</button>
+                    </div>
+                    <div class="sr-camera-view">
+                        <video id="srVideo" playsinline autoplay muted></video>
+                    </div>
+                    <div class="sr-camera-actions">
+                        <button type="button" id="srSnap" class="sr-primary">
+                            <i class="fa-solid fa-circle-dot"></i> Capture
+                        </button>
+                    </div>
+                    <canvas id="srCanvas" hidden></canvas>
+                </div>
             </div>
-         </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="sr-card-foot">
+            <button class="cancel" id="cancel">Cancel</button>
+            <button class="add-bookbox-submit" id="addBookboxSubmit">Add Box</button>
+        </div>
+    </div>
+</div>
     </main>
+    
 </body>
 </html>
