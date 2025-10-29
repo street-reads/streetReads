@@ -227,6 +227,7 @@ main {
     color: #ffffff;
     background-color: #4747D0;
     border-radius: 4px;
+    font-family: "Poppins", sans-serif;
 }
 
 .main {
@@ -323,6 +324,7 @@ main {
     border-radius: 8px;
     padding: 0 12px;
     outline: none;
+    font-family: "Poppins", sans-serif;
 }
 
 .sr-input:focus {
@@ -351,6 +353,7 @@ main {
     color: #4747D0;
     font-weight: 600;
     cursor: pointer;
+    font-family: "Poppins", sans-serif;
 }
 
 .sr-pill i {
@@ -433,6 +436,7 @@ main {
     color: #4747D0;
     border-radius: 6px;
     padding: 8px 14px;
+    font-family: "Poppins", sans-serif;
 }
 
 /* responsive */
