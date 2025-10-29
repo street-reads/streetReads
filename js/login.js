@@ -109,6 +109,9 @@ function loginUser(data) {
             let errorMessage = 'Login failed. Please try again.';
             
             switch (error.code) {
+                case 'auth/invalid-credential':
+                    errorMessage = 'Invalid credentials';
+                    break;
                 case 'auth/user-not-found':
                     errorMessage = 'No account found with this email address.';
                     break;
