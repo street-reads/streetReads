@@ -14,6 +14,10 @@ const firebaseConfig = {
     appId: '1:228045832951:web:4b6d868e05a72ab08a89f2',
 };
 
+document.addEventListener('profile', () => {
+    window.location.reload(); // or just do nothing since already on profile page
+});
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);

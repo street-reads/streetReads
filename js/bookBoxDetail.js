@@ -11,6 +11,9 @@ fetch("../data/bookBoxData.json")
     }
 
     // Fill title and address
+    document.addEventListener('profile', () => {
+    window.location.href = '/pages/user-profile.html';
+});
     document.getElementById("boxName").textContent = box.name;
     document.getElementById("boxAddress").textContent = box.address;
 
