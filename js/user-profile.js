@@ -2,7 +2,7 @@
 
 // --- Firebase (v9 modular) ---
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -218,17 +218,43 @@ function showAddedBoxes(addedBoxes) {
 }
 
 // ---------- Main ----------
-async function main() {
+async function main(userId) {
     // TODO: replace with actual signed-in user id from Auth
-    const loginUserId = 'users'; // placeholder used in your earlier code
+    // const loginUserId = 'users'; // placeholder used in your earlier code
 
-    const user = await fetchUsers(loginUserId);
+    const user = await fetchUsers(userId);
     showUserInfo(user);
 
-    const contribution = await countUserContribution(loginUserId);
+    const contribution = await countUserContribution(userId);
     showAddedBoxes(contribution.addedBoxes);
 
-    await showFavoriteBoxes(loginUserId);
+    await showFavoriteBoxes(userId);
 }
 
-main();
+// auth state
+onAuthStateChanged(auth, async (user) =>{
+if(user) {
+    console.log("logged in user: ", user.uid);
+    await main(user.uid);
+} else {
+    console.log("User not logged in redirecting...");
+    window.location.href = "../pages/login.html";
+}
+
+});
+
+// logout
+
+if(logOut){
+    logOut.addEventListener("click", async() => {
+        try {
+            await signOut(auth);
+            console.log("Sing out");
+            window.location.href = "../pages/login.html";
+        } catch (e) {
+            console.log("Sing out error: ", e);
+        }
+    });
+}
+
+// main();
