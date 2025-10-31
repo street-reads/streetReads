@@ -69,6 +69,10 @@ main {
     height: 40px;
 }
 
+.outline-filter {
+    color: transparent ;
+  -webkit-text-stroke: 2px #4747D0;
+}
 
 .search .filterBtn {
     padding: 0.5rem 1rem;
@@ -162,6 +166,8 @@ main {
     color: #4747D0;
     border-radius: 8px;
     height: 40px;
+    width: 70px;
+    cursor: pointer;
 }
 
 .update-filter {
@@ -169,6 +175,8 @@ main {
     background-color: #4747D0;
     border-radius: 8px;
     height: 40px;
+    width: 70px;
+    cursor: pointer;
 }
 
 /* filter feild end here */
@@ -490,7 +498,10 @@ main {
     border-radius: 50%;
     border: 2px solid #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
-    position: relative;
+    /* let the map SDK position the element absolutely; avoid relative positioning which
+       can interfere with SDK-managed transforms during zoom/pan */
+    position: absolute;
+    pointer-events: auto;
 }
 
 .marker-bookbox::after {
