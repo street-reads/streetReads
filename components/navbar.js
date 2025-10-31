@@ -6,7 +6,7 @@
 
     class AppNavbar extends HTMLElement {
         static get observedAttributes() {
-            return ['brand', 'avatar', 'helplabel'];
+            return ['brand', 'avatar'];
         }
 
         constructor() {
@@ -15,7 +15,6 @@
             this.state = {
                 brand: this.getAttribute('brand') || 'Street Reads',
                 avatar: this.getAttribute('avatar') || 'https://i.pravatar.cc/100?img=5',
-                helplabel: this.getAttribute('helplabel') || 'Help',
             };
         }
 
@@ -26,15 +25,15 @@
 
         connectedCallback() {
             this.render();
-            // emit a custom event when Help is clicked
+            // emit a custom event when Avatar is clicked
             this.shadowRoot.addEventListener('click', (e) => {
-                const btn = e.target.closest('button[data-help]');
-                if (btn) this.dispatchEvent(new CustomEvent('help', { bubbles: true }));
+                const avatar = e.target.closest('.avatar');
+                if (avatar) this.dispatchEvent(new CustomEvent('profile', { bubbles: true }));
             });
         }
 
         render() {
-            const { brand, avatar, helplabel } = this.state;
+            const { brand, avatar } = this.state;
 
             this.shadowRoot.innerHTML = `
         <style>
@@ -73,36 +72,21 @@
           .header-right {
             display: flex;
             align-items: center;
-            gap: 10px;
           }
 
-          .pill.small {
-            background: rgba(255,255,255,.15);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,.25);
-            padding: 6px 10px;
-            border-radius: 999px;
+          .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: url('${avatar}') center/cover no-repeat;
+            border: 2px solid rgba(255, 255, 255, .65);
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 700;
+            transition: transform 0.2s ease;
           }
-          .pill.small:hover { background: rgba(255,255,255,.22); }
-
-        //   .avatar {
-        //     width: 34px; height: 34px;
-        //     border-radius: 50%;
-        //     background: url('${avatar}') center/cover no-repeat;
-        //     border: 2px solid rgba(255,255,255,.65);
-        //   }
-        .avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: url('https://i.pravatar.cc/100?img=5') center/cover no-repeat;
-    border: 2px solid rgba(255, 255, 255, .65);
-}
+          .avatar:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, .85);
+          }
 
           /* allow consumers to put content on the right if needed */
           ::slotted(*) { margin-left: 8px; }
@@ -113,17 +97,7 @@
             <h1 class="brand">${brand}</h1>
 
             <div class="header-right">
-              <button class="pill small" data-help>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 17h.01M9.09 9a3 3 0 1 1 5.82 1c-.37.72-1.03 1.13-1.56 1.52-.49.36-.85.63-.85 1.48V14"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                ${helplabel}
-              </button>
-
               <div class="avatar" role="img" aria-label="Your profile"></div>
-              
             </div>
           </div>
         </header>

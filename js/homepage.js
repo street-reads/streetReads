@@ -20,6 +20,9 @@ const firebaseConfig = {
     appId: '1:228045832951:web:4b6d868e05a72ab08a89f2',
 };
 
+document.addEventListener('profile', () => {
+    window.location.href = '/pages/user-profile.html';
+});
 // map + marker registry
 let appMap = null;
 const markersById = new Map();
