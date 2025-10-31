@@ -13,6 +13,11 @@
     <script type="module" src="../js/homepage.js" defer></script>
     <script src="../components/navbar.js" type="module"></script>
 
+
+    <!-- Google font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Agbalumo&family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <!-- CSS -->
      <link rel="stylesheet" href="../css/homepage.css">
     <title>Homepage</title>
@@ -21,7 +26,9 @@
     <!-- <header>
         <h1>Street Reads</h1>
         <div class="header-button">
-            <img src="https://picsum.photos/100/100?random=$" alt="">
+            <a href="/pages/user-profile.html">
+                 <img src="https://picsum.photos/100/100?random=$" alt="User profile">
+            </a>
         </div>
     </header> --> 
     <app-navbar brand="Street Reads" href="/" avatar="/images/me.jpg">
@@ -35,18 +42,18 @@
             <p>Discover little Free libraries around you</p>
             <div class="search-field">
                 <div class="search">
-                    <input class="search-text" type="text" >
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <button id="filterBtn" class="filterBtn"><i class="fa-solid fa-filter"> Filter</i></button>
+                    <input id="search-text" class="search-text" type="text" placeholder="Search by address, street">
+                    <button id="searchBtn" class="searchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <button id="filterBtn" class="filterBtn"><i class="fa-solid fa-filter outline-filter"></i>Filter</button>
                     
                     <!-- filter feild - moved inside .search -->
                     <div id="filterFeild" class="filter-feild">
                         <div class="filter-top">
                             <h3>Filters</h3>
-                            <div class="filter-top-buttons">
+                            <!-- <div class="filter-top-buttons">
                                 <button class="select-all" id="selectAll">Select all</button>
                                 <button class="deselect-all" id="deselectAll">Deselect all</button>
-                            </div>
+                            </div> -->
                         </div>
 
                         <div class="check-list">
@@ -56,7 +63,7 @@
                             </label>
                             <label for="nearby">
                                 <input type="checkbox" name="filters" value="nearby" id="nearby">
-                                nearby
+                                Nearby
                             </label>
                             <label for="most-popular">
                                 <input type="checkbox" name="filters" value="most-popular" id="most-popular">
