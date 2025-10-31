@@ -202,20 +202,25 @@
 
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, getDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove } 
+from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-//Firebase設定
-const firebaseConfig = {
-  apiKey: "AIzaSyDP88zVX_yPRwOKZl_xJxqjph2GFBNuk2o",
-  authDomain: "street-reads.firebaseapp.com",
-  projectId: "street-reads",
-  storageBucket: "street-reads.firebasestorage.app",
-  messagingSenderId: "228045832951",
-  appId: "1:228045832951:web:4b6d868e05a72ab08a89f2"
-};
+
+//Firebase
+// const firebaseConfig = {
+//   apiKey: "AIzaSyDP88zVX_yPRwOKZl_xJxqjph2GFBNuk2o",
+//   authDomain: "street-reads.firebaseapp.com",
+//   projectId: "street-reads",
+//   storageBucket: "street-reads.firebasestorage.app",
+//   messagingSenderId: "228045832951",
+//   appId: "1:228045832951:web:4b6d868e05a72ab08a89f2"
+// };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
 
 //URL parameter
 const params = new URLSearchParams(window.location.search);
@@ -256,9 +261,9 @@ function loadBox() {
     .then((boxSnap) => {
       let foundBox = null;
 
-      boxSnap.forEach((docSnap) => {
+boxSnap.forEach((docSnap) => {
         const data = docSnap.data();
-        if (data.libraryId === boxId) {
+        if (docSnap.id === boxId || data.libraryId === boxId) {
           foundBox = { id: docSnap.id, ...data };
         }
       });
@@ -286,6 +291,9 @@ function loadBox() {
       imgContainer.innerHTML = "";
 
       const img = foundBox.photoURL;
+      console.log("photoURL:", foundBox.photoURL);
+      console.log("type:", typeof foundBox.photoURL);
+
       if (img.length === 0) {
         imgContainer.textContent = "No images yet, add the first one!"
       } else {
@@ -348,9 +356,18 @@ function displayAvgRating(reviews) {
   for (let i = 0; i < totalStars; i++) {
     if (i < Math.floor(avg)) {
       starsHTML += `<i class="fa-solid fa-star"></i>`;
-    } else if (i === Math.floor(avg) && avg - Math.floor(avg) >= 0.5) {
-      starsHTML += `<i class="fa-regular fa-star-half-stroke"></i>`;
-    } else {
+    }
+    else if (i === Math.floor(avg)) {
+      const halfStar = avg - Math.floor(avg);
+      if (halfStar >= 0.75) {
+        starsHTML += `<i class="fa-solid fa-star"></i>`;
+      } else if (halfStar >= 0.25) {
+        starsHTML += `<i class="fa-solid fa-star-half-stroke"></i>`;
+      } else {
+        starsHTML += `<i class="fa-regular fa-star"></i>`; //空
+      }
+    }
+    else {
       starsHTML += `<i class="fa-regular fa-star"></i>`;
     }
   }
@@ -393,6 +410,110 @@ form.addEventListener("submit", (event) => {
       alert("Failed to add review.");
     });
 });
+
+//add fav
+//test
+const userId = "user_002";
+const userRef = doc(db, "users", userId);
+
+// onAuthStateChanged(auth, (user) => {
+//   if (user) {
+//     const userId = user.uid; 
+//     const userRef = doc(db, "users", userId);
+
+//     initFavorites(userRef);
+//   } else {
+//     console.log("User not logged in");
+//   }
+// });
+
+// DOM
+const favButton = document.getElementById("favButton");
+const favIcon = document.getElementById("favIcon");
+const favText = document.getElementById("favText");
+
+// --- お気に入り状態をチェック ---
+const checkFavStatus = () => {
+  getDoc(userRef).then((snap) => {
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    const favorites = data.favorites || [];
+    const isFav = favorites.includes(boxId);
+    updateFavUI(isFav);
+  });
+};
+
+// --- UI更新 ---
+const updateFavUI = (isFav) => {
+  if (isFav) {
+    favIcon.classList.replace("fa-regular", "fa-solid");
+    favIcon.style.color = "#4747D0";
+    favText.textContent = "Added to Favorites";
+    favText.style.color = "#4747D0";
+  } else {
+    favIcon.classList.replace("fa-solid", "fa-regular");
+    favIcon.style.color = "";
+    favText.textContent = "Add to Favorites";
+    favText.style.color = "";
+  }
+};
+
+// --- トグル処理 ---
+const toggleFav = () => {
+  getDoc(userRef)
+  .then((snap) => {
+    if (!snap.exists()) {
+      console.error("User not found");
+      return;
+    }
+
+    const data = snap.data();
+    const favorites = data.favorites || [];
+    const isFav = favorites.includes(boxId);
+
+    if (isFav) {
+      // 削除
+      updateDoc(userRef, {
+        favorites: arrayRemove(boxId)
+      })
+        .then(() => {
+          console.log("Removed from favorites");
+          updateFavUI(false);
+        });
+    } else {
+      // 追加
+      updateDoc(userRef, {
+        favorites: arrayUnion(boxId)
+      })
+        .then(() => {
+          console.log("Added to favorites");
+          updateFavUI(true);
+        });
+    }
+  });
+};
+
+
+
+// --- 初期化処理 ---
+getDoc(userRef)
+  .then((snap) => {
+    if (!snap.exists()) {
+      return setDoc(userRef, { favorites: [] });
+    }
+  })
+  .then(() => {
+    console.log("User doc ready");
+    checkFavStatus();
+
+    if (favButton) {
+      favButton.addEventListener("click", toggleFav);
+    }
+  })
+  .catch((err) => console.error("Error initializing favorites:", err));
+
+
 
 //modal
 const modal = document.querySelector(".modal");

@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BookBox Detail</title>
+    <script src="../js/firebase-config.js"></script>
     <script type="module" src="../js/bookBoxDetail.js"></script>
     <link rel="stylesheet" href="../css/bookBoxDetail.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -14,7 +15,11 @@
 
 <body>
     <header>
-        <h1>Street Reads</h1>
+        <h1><a href="../pages/homepage.html">Street Reads</a></h1>
+        <div class="header-button">
+            <a href="../pages/"><img src="https://picsum.photos/100/100?random=$" alt=""></a>
+        </div>
+    </header>
     </header>
 
     <main>
@@ -26,8 +31,10 @@
                     <p id="boxAddress"></p>
                 </div>
                 <div class="fav">
-                    <p>Add to Favorites</p>
-                    <span class="fa-solid fa-heart"></span>
+                    <button id="favButton">
+                        <span id="favText">Add to Favorites</span>
+                        <span id="favIcon" class="fa-regular fa-heart"></span>
+                    </button>
                 </div>
             </div>
             <div class="imgContainer">
@@ -70,13 +77,13 @@
                 </div>
                 <form action="submit" method="post" name="form" id="form" onsubmit="submitForm()">
                     <p for="review" class="form-title">Add a Review </p>
-                    
+
                     <label for="reviewerName">Name</label>
                     <input type="text" id="reviewerName">
-                    
+
                     <label for="reviewText">Review</label>
                     <textarea id="reviewText"></textarea>
-                    
+
                     <div class="stars" id="rating">
                         <i class="fa-solid fa-star"></i>
                         <i class="fa-solid fa-star"></i>
