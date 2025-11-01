@@ -187,8 +187,8 @@ async function showFavoriteBoxes(userId) {
       <img src="map-img.png" alt="Map preview">
       <div class="box-detail">
         <p>${fav.libraryName}</p>
+        <i class="fa-solid fa-location-dot"></i>
         <div class="location-info">
-          <i class="fa-solid fa-location-dot"></i>
           <p>${fav.libraryAddress}</p>
         </div>
       </div>
@@ -210,8 +210,8 @@ function showAddedBoxes(addedBoxes) {
         <img src="map-img.png" alt="Map preview">
         <div class="box-detail">
           <p>${data.name || 'Book Box'}</p>
+          <i class="fa-solid fa-location-dot"></i>
           <div class="location-info">
-            <i class="fa-solid fa-location-dot"></i>
             <p>${data.address || ''}</p>
           </div>
         </div>
