@@ -9,22 +9,17 @@
     integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="../css/user-profile.css" />
+      <script src="../components/navbar.js" type="module"></script>
 </head>
 
 <body>
 
   <!-- Header like screenshot -->
-  <header class="sr-header">
-    <div class="wrap">
-      <h1 class="brand">Street Reads</h1>
-      <div class="header-right">
-        <button class="pill small">
-          <i class="fa-solid fa-circle-question"></i>&nbsp;Help
-        </button>
-        <div class="avatar" aria-label="Your profile"></div>
-      </div>
-    </div>
-  </header>
+  <app-navbar brand="Street Reads" href="/" avatar="/images/me.jpg">
+        <a slot="nav" href="/explore">Explore</a>
+        <a slot="nav" href="/favorites">Favorites</a>
+        <button slot="actions" class="pill" onclick="location.href='/add'">Add BookBox</button>
+    </app-navbar>
 
   <main class="layout">
     <!-- LEFT: Profile Card -->
@@ -32,15 +27,17 @@
       <div class="profile-head">
         <div class="photo-wrap">
           <img id="profile-photo" class="photo" src="https://i.pravatar.cc/160?img=12" alt="Profile photo" />
-          <button class="icon-btn edit"><i class="fa-solid fa-pen"></i></button>
+          
         </div>
 
         <div class="identity">
           <h2 class="display-name" id="display-name">Luigi</h2>
           <div class="muted small">
-            <span id="number-of-post">10</span> Reviews
+            <span id="number-of-post">10</span> 
+            <p>Reviews</p>
           </div>
         </div>
+        <button class="icon-btn edit"><i class="fa-solid fa-pen"></i></button>
       </div>
 
       <div class="info-table">

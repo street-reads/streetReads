@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="../css/login.css">
         <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -14,33 +14,28 @@
     <div class="container">
         <div class="logo-section">
             <div class="logo">
-                <div class="logo-icon"></div>
-                <h1>Street Reads</h1>
+                <div class="logo-icon" aria-hidden="true"></div>
+                <span class="logo-text">Street Reads</span>
             </div>
         </div>
         
-        <form id="loginForm" class="login-form">
+        <form id="loginForm" class="login-form" novalidate>
             <div class="form-group">
-                <label for="email">Email:</label>
+                <label for="email">Email</label>
                 <input type="email" id="email" name="email" required>
             </div>
             
             <div class="form-group">
-                <label for="password">Password:</label>
+                <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
-            </div>
-            
-            <div class="form-group checkbox-group">
-                <input type="checkbox" id="rememberMe" name="rememberMe">
-                <label for="rememberMe">Remember me</label>
             </div>
             
             <button type="submit" class="submit-btn">Login</button>
         </form>
         
         <div class="form-footer">
-            <p>Don't have an account? <a href="/pages/register.html">Sign up here</a></p>
-            <p><a href="#" id="forgotPassword">Forgot your password?</a></p>
+            <a href="#" id="forgotPassword" class="footer-link-left">Forgot Password?</a>
+            <span class="footer-text-center">Don't have an account? <a href="register.html" class="footer-link-center">Sign up</a></span>
         </div>
         
         <div id="message" class="message"></div>

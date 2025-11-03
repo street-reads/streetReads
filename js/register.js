@@ -87,10 +87,6 @@ function validateForm(data) {
         errors.push('Passwords do not match');
     }
     
-    if (!data.terms) {
-        errors.push('You must agree to the terms and conditions');
-    }
-    
     return {
         isValid: errors.length === 0,
         message: errors.length > 0 ? errors.join('. ') : ''
@@ -153,7 +149,7 @@ function registerUser(data) {
                 userId: userId,
                 libraryId: '',
                 location: new firebase.firestore.GeoPoint(0, 0), // Default location
-                locationName: data.country || '',
+                locationName: data.location || '',
                 photoURL: ''
             });
         })
