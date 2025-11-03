@@ -10,148 +10,127 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <script src="../js/bookBoxDetail.js" defer></script>
+    <script type="module" src="../js/bookBoxDetail.js" defer></script>
     <script src="../components/navbar.js" type="module"></script>
 </head>
 
 <body>
-    <!-- Header -->
-    <!-- <header class="sr-header">
-        <div class="wrap">
-            <h1 class="brand">Street Reads</h1>
-            <div class="header-right">
-                <button class="pill small">
-                    <i class="fa-solid fa-circle-question"></i>&nbsp;Help
+    <header>
+        <h1><a href="../pages/homepage.html">Street Reads</a></h1>
+        <div class="header-button">
+            <a href="../pages/user-profile.html"><img src="https://picsum.photos/100/100?random=$" alt=""></a>
+        </div>
+    </header>
+    </header>
+
+    <main>
+        <div class="left">
+            <!-- BOOK BOX -->
+            <div class="boxDetail">
+                <div class="info">
+                    <h2 id="boxName">Loading</h2>
+                    <p id="boxAddress"></p>
+                </div>
+                <div class="fav">
+                    <button id="favButton">
+                        <span id="favText">Add to Favorites</span>
+                        <span id="favIcon" class="fa-regular fa-heart"></span>
+                    </button>
+                </div>
+            </div>
+            <div class="imgContainer">
+                <div class="images" id="boxImages">
+                    <!-- <img src="https://picsum.photos/300/400?random=1" alt="">
+                    <img src="https://picsum.photos/300/400?random=2" alt="">
+                    <img src="https://picsum.photos/300/400?random=3" alt="">
+                    <img src="https://picsum.photos/300/400?random=4" alt="">
+                    <img src="https://picsum.photos/300/400?random=5" alt="">
+                    <img src="https://picsum.photos/300/400?random=6" alt="">
+                    <img src="https://picsum.photos/300/400?random=7" alt="">
+                    <img src="https://picsum.photos/300/400?random=8" alt="">
+                    <img src="https://picsum.photos/300/400?random=9" alt="">
+                    <img src="https://picsum.photos/300/400?random=10" alt="">
+                    <img src="https://picsum.photos/300/400?random=11" alt=""> -->
+                </div>
+            </div>
+            <div class="btnContainer">
+                <button class="btn" id="addBoxPicBtn">
+                    Add a Picture
+                    <input type="file" id="boxPicInput" accept="image/*" style="display:none">
                 </button>
-                <div class="avatar" aria-label="Your profile"></div>
+            </div>
+
+            <!-- RATING -->
+            <div class="rateBox">
+                <p>Rate This BookBox</p>
+                <div class="rateContainer">
+                    <div class="starsAvg" id="rateAvg">
+                        <!-- <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i> -->
+                    </div>
+                    <button class="btn btn-open">Add a Review</button>
+                </div>
+            </div>
+            <!-- POP UP -->
+            <section class="modal hidden">
+                <div class="flex">
+                    <button class="btn-close">⨉</button>
+                </div>
+                <form action="submit" method="post" name="form" id="form" onsubmit="submitForm()">
+                    <p for="review" class="form-title">Add a Review </p>
+
+                    <label for="reviewerName">Name</label>
+                    <input type="text" id="reviewerName">
+
+                    <label for="reviewText">Review</label>
+                    <textarea id="reviewText"></textarea>
+
+                    <div class="stars" id="rating">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div class="btnContainer">
+                        <button type="submit" class="btn">Send</button>
+                    </div>
+                </form>
+            </section>
+            <div class="overlay hidden"></div>
+            <!-- <button class="btn btn-open">Add a Review</button> -->
+            <!-- REVIEW BOX -->
+            <div class="reviewContainer">
+                <div id="reviews"></div>
             </div>
         </div>
-    </header> -->
-    <app-navbar brand="Street Reads" href="/" avatar="/images/me.jpg">
-        <a slot="nav" href="/explore">Explore</a>
-        <a slot="nav" href="/favorites">Favorites</a>
-        <button slot="actions" class="pill" onclick="location.href='/add'">Add BookBox</button>
-    </app-navbar>
 
-    <!-- Main -->
-    <main class="layout">
-        <!-- LEFT SIDE -->
-        <section class="left">
-            <!-- Title + address row -->
-            <div class="titleRow">
-                <div>
-                    <h2 id="boxName" class="h2">BookBox 01</h2>
-                    <p id="boxAddress" class="muted">123 Happy St, V5Y 0L9</p>
-                </div>
+        <div class="right">
+            <!-- LEAVE MESSAGES -->
+            <p class="right_heading">What People are saying</p>
 
-                <button class="favLink" type="button">
-                    <span>Add to Favorites</span>
-                    <i class="fa-solid fa-heart"></i>
-                </button>
-            </div>
+            <div id="chatContainer">
+                <div id="messages"></div>
 
-            <!-- Media block: featured + thumbnails -->
-            <div class="mediaGrid card">
-                <figure class="featured">
-                    <!-- JS swaps this src when a thumbnail is clicked -->
-                    <img id="featuredImg"
-                        src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1200&auto=format&fit=crop"
-                        alt="BookBox main photo" />
-                </figure>
+                <div id="chatInputArea">
+                    <input type="text" id="chatInput" />
+                    <button id="sendBtn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                    <button id="attachImgBtn">
+                        <i class="fa-solid fa-paperclip"></i>
+                        <input type="file" id="attachInput" style="display:none" accept="image/*">
+                    </button>
 
-                <div class="thumbs" id="boxImages">
-                    <!-- Your JS can inject real photos; placeholders below -->
-                    <img src="https://picsum.photos/seed/aa/300/300" alt="thumbnail 1" />
-                    <img src="https://picsum.photos/seed/bb/300/300" alt="thumbnail 2" />
-                    <img src="https://picsum.photos/seed/cc/300/300" alt="thumbnail 3" />
-                    <img src="https://picsum.photos/seed/dd/300/300" alt="thumbnail 4" />
-                    <img src="https://picsum.photos/seed/ee/300/300" alt="thumbnail 5" />
-                    <img src="https://picsum.photos/seed/ff/300/300" alt="thumbnail 6" />
-                    <img src="https://picsum.photos/seed/gg/300/300" alt="thumbnail 7" />
-                    <img src="https://picsum.photos/seed/hh/300/300" alt="thumbnail 8" />
-                    <img src="https://picsum.photos/seed/ii/300/300" alt="thumbnail 9" />
                 </div>
             </div>
-
-            <!-- Actions row -->
-            <div class="actionsRow">
-                <div class="rateBox">
-                    <p class="label">Rate this BookBox</p>
-                    <div class="starsWrap">
-                        <div class="stars" id="rateAvg" aria-label="Average rating">
-                            <i class="fa-solid fa-star active"></i>
-                            <i class="fa-solid fa-star active"></i>
-                            <i class="fa-solid fa-star active"></i>
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-solid fa-star"></i>
-                        </div>
-                        <div class="meta tiny"><span id="avgScore">4.2</span>&nbsp;|&nbsp;<span id="reviewCount">3
-                                reviews</span></div>
-                    </div>
-                    <button class="btn btn-open" type="button">Add a Review</button>
-                </div>
-
-                <div class="spacer"></div>
-
-                <button class="btn ghost" id="addPictureBtn" type="button">
-                    Add a Picture
-                </button>
-            </div>
-
-            <!-- Reviews -->
-            <section class="card reviewsCard">
-                <h3 class="h3">Reviews</h3>
-                <div id="reviews" class="reviewList">
-                    <!-- JS fills .reviewItem elements -->
-                </div>
-            </section>
-
-            <!-- Modal -->
-            <section class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
-                <div class="modalCard">
-                    <div class="modalHeader">
-                        <h3 id="reviewTitle">Add a Review</h3>
-                        <button class="btnIcon btn-close" aria-label="Close">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-
-                    <label class="fieldLabel" for="review">Your review</label>
-                    <textarea id="review" rows="6" placeholder="Share your experience…"></textarea>
-
-                    <div class="btnRow end">
-                        <button class="btn" id="saveReviewBtn" type="button">Save</button>
-                    </div>
-                </div>
-            </section>
-            <div class="overlay hidden" tabindex="-1" aria-hidden="true"></div>
-        </section>
-
-        <!-- RIGHT SIDE -->
-        <aside class="right">
-            <section class="card chatCard">
-                <div class="chatHeader">
-                    <h3 class="h3">What People are saying</h3>
-                </div>
-
-                <div id="messages" class="chatList">
-                    <!-- JS fills .chatItem elements -->
-                </div>
-
-                <div class="chatInput">
-                    <textarea id="chatText" rows="1" placeholder="Write a message…"></textarea>
-                    <div class="chatActions">
-                        <button class="btnIcon" id="attachBtn" title="Attach photo">
-                            <i class="fa-regular fa-image"></i>
-                        </button>
-                        <button class="btnIcon" id="sendBtn" title="Send">
-                            <i class="fa-regular fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </aside>
+        </div>
     </main>
 </body>
+
+</html>
 
 </html>
