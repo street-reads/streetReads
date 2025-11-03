@@ -203,8 +203,8 @@ body {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  /* border: 1px solid var(--line); */
-  /* background: #fff; */
+  border: none;
+  background: var(--bxc);
   cursor: pointer;
 }
 
@@ -327,6 +327,21 @@ body {
 .location-info {
   grid-column: 2/3;
   grid-row: 2/3;
+}
+
+/* contribution */
+
+.sub-title {
+  text-align: center;
+}
+
+.book-box-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 4px;
 }
 
 .thumb {
