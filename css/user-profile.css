@@ -333,7 +333,7 @@ body {
 
 .sub-title {
   text-align: center;
-}
+} 
 
 .book-box-info {
   display: grid;
@@ -342,7 +342,7 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 4px;
-}
+} 
 
 .thumb {
   width: 100%;
