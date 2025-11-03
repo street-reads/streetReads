@@ -67,6 +67,8 @@
             font-size: clamp(1.25rem, 2.4vw, 1.7rem);
             font-weight: 800;
             letter-spacing: .2px;
+            /* be explicit and include fallbacks */
+            font-family: 'Agbalumo', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
           }
 
           .header-right {
