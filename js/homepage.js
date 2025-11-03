@@ -3,6 +3,7 @@ import {
     getFirestore,
     getDocs,
     collection,
+    doc,
     addDoc,
     updateDoc,
     serverTimestamp,
@@ -363,7 +364,7 @@ function enableAddressAutocomplete(addressInput) {
 }
 
 /* CREATE a new doc with GeoPoint; prefers preselected coordinates from autocomplete */
-async function createLibrary({ name, address, coords }) {
+async function createLibrary({ name, address, coords, photoURLs = [] }) {
     const { lat, lng } = coords ?? (await geocodeAddress(address));
     const payload = {
         name: name ?? null,
@@ -371,7 +372,7 @@ async function createLibrary({ name, address, coords }) {
         libraryId: null,
         createdBy: null,
         location: new GeoPoint(lat, lng),
-        photoURL: [],
+        photoURL: Array.isArray(photoURLs) ? photoURLs : [],
         comments: [],
         reviews: [],
         averageRating: null,
@@ -728,21 +729,58 @@ function addBookboxField() {
         if (!addr) return alert('Please enter an address.');
 
         try {
-            const coords = addressInput._chosenCoords || null; // {lat,lng} if selected from suggestions or “Use my location”
-            const newId = await createLibrary({ name, address: addr, coords });
+            // Disable submit button during upload
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading images...';
+            
+            const coords = addressInput._chosenCoords || null; // {lat,lng} if selected from suggestions or "Use my location"
+            
+            // Create the book box document first to get the ID
+            const newId = await createLibrary({ name, address: addr, coords, photoURLs: [] });
+            
+            // Upload images if any are selected (using the real book box ID)
+            let photoURLs = [];
+            if (files && files.length > 0) {
+                try {
+                    console.log(`Uploading ${files.length} image(s) for BookBox ${newId}...`);
+                    photoURLs = await uploadBookBoxImages(files, newId);
+                    console.log('Images uploaded successfully:', photoURLs);
+                    
+                    // Update the book box document with the image URLs
+                    const docRef = doc(db, 'streetLibraries', newId);
+                    await updateDoc(docRef, { photoURL: photoURLs });
+                    console.log('BookBox updated with image URLs');
+                } catch (uploadError) {
+                    console.error('Error uploading images:', uploadError);
+                    alert('BookBox created but images failed to upload: ' + uploadError.message);
+                    // Continue even if images fail - book box is already created
+                }
+            }
+            
             console.log('Created BookBox doc:', newId);
+            
+            // Reset form
             nameInput.value = '';
             addressInput.value = '';
             addressInput._chosenCoords = null;
+            files = []; // Clear files array
+            renderFiles(); // Clear previews
             stopCamera();
             hide(modal);
             hide(backdrop);
             document.documentElement.style.overflow = '';
-            alert('Book Box saved!');
+            
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Add Box';
+            
+            alert('Book Box saved' + (photoURLs.length > 0 ? ` with ${photoURLs.length} image(s)!` : '!'));
             // live listener draws the marker
         } catch (err) {
             console.error(err);
             alert(err?.message || 'Failed to save. Check console.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Add Box';
         }
     });
 }
