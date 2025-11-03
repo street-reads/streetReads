@@ -142,6 +142,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebas
 import { getFirestore, collection, getDocs, getDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, onSnapshot }
   from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+
 
 // Firebase
 const firebaseConfig = {
@@ -156,6 +158,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 
 //URL parameter
@@ -165,6 +168,8 @@ const boxId = params.get("libraryId") || "lib_001";
 //DOM
 const boxName = document.getElementById("boxName");
 const boxAddress = document.getElementById("boxAddress");
+const addBoxPicBtn = document.getElementById("addBoxPicBtn");
+const boxPicInput = document.getElementById("boxPicInput");
 const reviewsContainer = document.getElementById("reviews");
 const reviewerName = document.getElementById("reviewerName");
 const reviewText = document.getElementById("reviewText");
@@ -227,6 +232,7 @@ function loadBox() {
       //既存の loadBox 内でボックスを見つけた後に↓を追加
       currentBoxRef = doc(db, "streetLibraries", foundBox.id);
       initChatListener(currentBoxRef);
+      initChatListener(currentBoxRef);
 
       const reviews = foundBox.reviews;
       if (!reviews || reviews.length === 0) {
@@ -264,12 +270,19 @@ function loadBox() {
 
         const reviewHeader = document.createElement("div");
         reviewHeader.className = "reviewHeader";
-        reviewHeader.innerHTML = `
-          <img src="${review.avatarURL || 'https://i.pravatar.cc/50'}" alt="avatar" class="avatar">
-        <strong>${review.reviewerName}</strong> <p>rating: ${review.rating}</p>`;
-
         const reviewText = document.createElement("p");
-        reviewText.textContent = review.reviewText;
+        // reviewText.textContent = review.reviewText;
+        reviewHeader.innerHTML = `
+          <div class="reviewItem">
+              <img src="${review.avatarURL || 'https://i.pravatar.cc/50'}" alt="avatar" class="avatar">
+              <div class="reviewContent">
+                <div class="reviewHeader">
+                  <strong>${review.reviewerName || "Anonymous"}</strong>
+                  <span class="rating">⭐ ${review.rating || 0}</span>
+                </div>
+                <p class="reviewText">${review.reviewText || ""}</p>
+              </div>
+          </div>`;
 
         div.append(reviewHeader, reviewText);
         reviewsContainer.appendChild(div);
@@ -283,6 +296,27 @@ function loadBox() {
 }
 
 loadBox();
+
+//add box pic
+addBoxPicBtn.addEventListener("click", () => boxPicInput.click());
+
+boxPicInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file || !currentUser) return alert("Please log in to add a picture.");
+
+  const fileRef = ref(storage, `boxImages/${currentBoxRef.id}/${Date.now()}_${file.name}`);
+  try {
+    await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(fileRef);
+    await updateDoc(currentBoxRef, { photoURL: arrayUnion(url) });
+    alert("Picture added!");
+    loadBox(); // 画面を更新
+  } catch (err) {
+    console.error(err);
+    alert("Failed to upload picture.");
+  }
+});
+
 
 //calculate average rating
 function displayAvgRating(reviews) {
@@ -523,8 +557,12 @@ function initChatListener(boxRef) {
   });
 }
 
+//chat
 function renderMessages(comments) {
+  console.log(comments);
+
   messages.innerHTML = "";
+
   comments.forEach((msg) => {
     const when = msg.createdAt?.toDate
       ? msg.createdAt.toDate().toLocaleString([], {
@@ -535,26 +573,26 @@ function renderMessages(comments) {
       })
       : "";
 
+const userAvatar = msg.avatarURL || "https://i.pravatar.cc/50";
+const imageSection = msg.commentImg 
+  ? `<div class="sentImage"><img src="${msg.commentImg}" alt="attached image"></div>` 
+  : "";
 
-    //attach img（あれば表示）
-    const imageSection = msg.commentImg
-      ? `
-        <div class="sentImage">
-            <img src="${msg.commentImg}" alt="attached image">
-        </div>
-        `
-      : "";
+
 
     const item = document.createElement("div");
     item.className = "chatItem";
     item.innerHTML = `
-      <div class="perUser">
-        <div class="userInfo">
-          <div class="who">${msg.userId || "Anonymous"}</div>
-          <div class="when">${when}</div>
+      <div class="commentItem">
+        <img src="${userAvatar}" alt="avatar" class="avatar">
+        <div class="perUser">
+          <div class="userInfo">
+            <div class="who">${msg.userId || "Anonymous"}</div>
+            <div class="when">${when}</div>
+          </div>
+          <div class="text">${msg.commentText || ""}</div>
+          ${imageSection}
         </div>
-        <div class="text">${msg.commentText || ""}</div>
-        <img>${imageSection}
       </div>
     `;
     messages.appendChild(item);
@@ -562,6 +600,7 @@ function renderMessages(comments) {
 
   messages.scrollTop = messages.scrollHeight;
 }
+
 
 //send msg
 sendBtn.addEventListener("click", async () => {
@@ -576,7 +615,7 @@ sendBtn.addEventListener("click", async () => {
 
   const newComment = {
     commentText: text,
-    commentImg: user.photoURL || "https://i.pravatar.cc/50",
+    // commentImg: user.photoURL || "https://i.pravatar.cc/50",
     createdAt: new Date(),
     parentCommentId: "",
     userId: user.displayName || "Anonymous",
@@ -604,5 +643,45 @@ chatInput.addEventListener("keydown", (e) => {
   }
 });
 
-attachImg.addEventListener("click", () => {
+const attachBtn = document.getElementById("attachImgBtn");
+const attachInput = document.getElementById("attachInput");
+
+attachBtn.addEventListener("click", () => {
+  attachInput.click();
 });
+
+attachInput.addEventListener("change", async () => {
+  const file = attachInput.files[0];
+  if (!file) return;
+
+  const user = auth.currentUser;
+  if (!user) {
+    alert("Please log in to send an image.");
+    return;
+  }
+
+  const fileRef = ref(storage, `chatImages/${currentBoxRef.id}/${Date.now()}_${file.name}`);
+
+  try {
+    await uploadBytes(fileRef, file);
+    const url = await getDownloadURL(fileRef);
+
+    const imageComment = {
+      commentText: "",
+      commentImg: url,
+      createdAt: new Date(),
+      userId: user.displayName || "Anonymous",
+      avatarURL: currentUser?.photoURL || "https://i.pravatar.cc/60",
+    };
+
+    await updateDoc(currentBoxRef, {
+      comments: arrayUnion(imageComment),
+    });
+
+    console.log("Image sent:", url);
+  } catch (err) {
+    console.error("Error uploading image:", err);
+    alert("Failed to send image.");
+  }
+});
+

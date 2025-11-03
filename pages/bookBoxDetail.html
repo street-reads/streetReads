@@ -18,7 +18,7 @@
     <header>
         <h1><a href="../pages/homepage.html">Street Reads</a></h1>
         <div class="header-button">
-            <a href="../pages/"><img src="https://picsum.photos/100/100?random=$" alt=""></a>
+            <a href="../pages/user-profile.html"><img src="https://picsum.photos/100/100?random=$" alt=""></a>
         </div>
     </header>
     </header>
@@ -54,7 +54,10 @@
                 </div>
             </div>
             <div class="btnContainer">
-                <button class="btn">Add a Picture</button>
+                <button class="btn" id="addBoxPicBtn">
+                    Add a Picture
+                    <input type="file" id="boxPicInput" accept="image/*" style="display:none">
+                </button>
             </div>
 
             <!-- RATING -->
@@ -107,7 +110,7 @@
 
         <div class="right">
             <!-- LEAVE MESSAGES -->
-            <p>What People are saying</p>
+            <p class="right_heading">What People are saying</p>
 
             <div id="chatContainer">
                 <div id="messages"></div>
@@ -117,9 +120,11 @@
                     <button id="sendBtn">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
-                    <button id="attachImg">
-                        <i class="fa-solid fa-paperclip" id="attachImg"></i>
+                    <button id="attachImgBtn">
+                        <i class="fa-solid fa-paperclip"></i>
+                        <input type="file" id="attachInput" style="display:none" accept="image/*">
                     </button>
+
                 </div>
             </div>
         </div>
