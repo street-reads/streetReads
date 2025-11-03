@@ -36,12 +36,12 @@ const apiKey = 'CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI';
 /* ===== BookBoxes demo (optional) ===== */
 const BOOKBOXES = [
     {
-        id: 'lib_001',
-        name: 'Kitsilano Community Book Exchange',
-        address: '2150 W 4th Ave, Vancouver, BC',
-        coords: [-123.1568, 49.2659],
-        photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=300&fit=crop',
-        averageRating: 4.6,
+        // id: 'lib_001',
+        // name: 'Kitsilano Community Book Exchange',
+        // address: '2150 W 4th Ave, Vancouver, BC',
+        // coords: [-123.1568, 49.2659],
+        // photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=300&fit=crop',
+        // averageRating: 4.6,
     },
 ];
 
@@ -83,12 +83,54 @@ function buildPopupEl(item) {
     const el = document.createElement('div');
     el.className = 'sr-popup';
     const ratingText = typeof item.averageRating === 'number' ? item.averageRating.toFixed(1) : '—';
-    el.innerHTML = `
-    <div class="ttl">${item.name || 'BookBox'}</div>
-    ${item.photo ? `<img class="img" src="${item.photo}" alt="">` : ''}
-    <div class="addr"><span class="icon">📍</span><span>${item.address || ''}</span></div>
-    <div class="meta"><span class="icon">⭐</span><span>${ratingText}</span></div>
-  `;
+
+    // Title: link to detail page if id present
+    const ttl = document.createElement('div');
+    ttl.className = 'ttl';
+    if (item.id) {
+        const a = document.createElement('a');
+        // bookBoxDetail is in the same "pages" folder, so relative link
+        a.href = `bookBoxDetail.html?id=${encodeURIComponent(item.id)}`;
+        a.textContent = item.name || 'BookBox';
+        a.style.color = 'inherit';
+        a.style.textDecoration = 'none';
+        ttl.appendChild(a);
+    } else {
+        ttl.textContent = item.name || 'BookBox';
+    }
+
+    el.appendChild(ttl);
+
+    if (item.photo) {
+        const img = document.createElement('img');
+        img.className = 'img';
+        img.src = item.photo;
+        img.alt = item.name || 'BookBox photo';
+        el.appendChild(img);
+    }
+
+    const addrDiv = document.createElement('div');
+    addrDiv.className = 'addr';
+    const addrIcon = document.createElement('span');
+    addrIcon.className = 'icon';
+    addrIcon.textContent = '📍';
+    const addrText = document.createElement('span');
+    addrText.textContent = item.address || '';
+    addrDiv.appendChild(addrIcon);
+    addrDiv.appendChild(addrText);
+    el.appendChild(addrDiv);
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const star = document.createElement('span');
+    star.className = 'icon';
+    star.textContent = '⭐';
+    const rating = document.createElement('span');
+    rating.textContent = ratingText;
+    meta.appendChild(star);
+    meta.appendChild(rating);
+    el.appendChild(meta);
+
     return el;
 }
 
@@ -230,6 +272,21 @@ async function geocodeAddress(address) {
     return { lat: pos.lat, lng: pos.lon }; // TomTom returns {lat, lon}
 }
 
+// Reverse geocode lat,lng → freeform address using TomTom Reverse Geocoding
+async function reverseGeocode(lat, lng) {
+    try {
+        const url = `https://api.tomtom.com/search/2/reverseGeocode/${encodeURIComponent(lat)},${encodeURIComponent(lng)}.json?key=${apiKey}&limit=1`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Reverse geocoding request failed');
+        const data = await res.json();
+        const addr = data?.addresses?.[0]?.address?.freeformAddress || data?.addresses?.[0]?.address?.municipality || null;
+        return addr;
+    } catch (e) {
+        console.warn('reverseGeocode failed', e);
+        return null;
+    }
+}
+
 /* ---------- NEW: Address autocomplete (typeahead) ---------- */
 function enableAddressAutocomplete(addressInput) {
     // ensure a datalist exists and the input points to it
@@ -354,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
         appMap = map;
 
         addBookboxMarkers(map, BOOKBOXES);
-        showUserLocation(map, { zoom: 16, follow: false });
+        showUserLocation(map, { zoom: 12, follow: false });
         startLibraryMarkersLive(map);
 
         console.log('Map initialized successfully!');
@@ -499,9 +556,20 @@ function addBookboxField() {
         useLocBtn.textContent = 'Getting location…';
 
         navigator.geolocation.getCurrentPosition(
-            ({ coords }) => {
-                addressInput.value = `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;
-                // user typed coords; no preselected suggestion
+            async ({ coords }) => {
+                // try to reverse-geocode the coords into a human address
+                let addr = null;
+                try {
+                    addr = await reverseGeocode(coords.latitude, coords.longitude);
+                } catch (e) {
+                    addr = null;
+                }
+                if (addr) {
+                    addressInput.value = addr;
+                } else {
+                    addressInput.value = `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;
+                }
+                // store chosen coords so createLibrary will use them directly
                 addressInput._chosenCoords = { lat: coords.latitude, lng: coords.longitude };
                 useLocBtn.disabled = false;
                 useLocBtn.textContent = originalText;
@@ -919,3 +987,7 @@ async function nearbyMe(map = appMap, meters = 1000) {
         alert('Failed to fetch nearby BookBoxes. See console.');
     }
 }
+
+//Most Popular
+
+
