@@ -79,6 +79,7 @@
             letter-spacing: .2px;
             /* be explicit and include fallbacks */
             font-family: 'Agbalumo', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            consur:pointer;
           }
 
           .brand-link {
