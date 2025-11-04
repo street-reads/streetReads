@@ -65,9 +65,8 @@
             z-index: 10;
           }
           .wrap {
-            max-width: 1180px;
             margin: 0 auto;
-            padding: 14px 20px;
+            padding: 8px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -87,6 +86,7 @@
             text-decoration: none;
             display: inline-block;
             cursor: pointer;
+            font-size: 2.5rem;
           }
 
           .header-right {
