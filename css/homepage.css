@@ -492,30 +492,24 @@ main {
 
 /* BookBox pin (matches earlier style) */
 .marker-bookbox {
-    width: 26px;
-    height: 26px;
-    background: #EA4335;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
-    /* let the map SDK position the element absolutely; avoid relative positioning which
-       can interfere with SDK-managed transforms during zoom/pan */
+    /* Replace the styled circle with a custom location pin image. */
+    width: 24px; /* adjust to your pin image dimensions */
+    height: 36px; /* adjust to your pin image dimensions */
+    /* Use SVG pinlaced in /images; use path relative to this CSS file */
+    background-image: url('../images/location_pin.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    /* position the graphic so the 'point' of the pin is at the bottom center */
+    background-position: center bottom;
+    border: 0;
+    /* keep a subtle shadow if desired */
+    /* box-shadow: 0 2px 8px rgba(0, 0, 0, .25); */
+    /* let the map SDK position the element absolutely */
     position: absolute;
     pointer-events: auto;
 }
 
-.marker-bookbox::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    bottom: -6px;
-    transform: translateX(-50%) rotate(45deg);
-    width: 10px;
-    height: 10px;
-    background: #EA4335;
-    border-right: 2px solid #fff;
-    border-bottom: 2px solid #fff;
-}
+/* The decorative triangle is no longer needed when using an image pin. */
 
 /* Popup card styling (for when you turn JS back on) */
 .sr-popup {
