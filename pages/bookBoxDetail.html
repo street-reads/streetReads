@@ -12,16 +12,26 @@
 
     <script type="module" src="../js/bookBoxDetail.js" defer></script>
     <script src="../components/navbar.js" type="module"></script>
+
+        <!-- Google font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Agbalumo&family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <header>
+
+    <app-navbar brand="Street Reads" href="/" avatar="/images/me.jpg">
+        <a slot="nav" href="/explore">Explore</a>
+        <a slot="nav" href="/favorites">Favorites</a>
+        <button slot="actions" class="pill" onclick="location.href='/add'">Add BookBox</button>
+    </app-navbar>
+    <!-- <header>
         <h1><a href="../pages/homepage.html">Street Reads</a></h1>
         <div class="header-button">
             <a href="../pages/user-profile.html"><img src="https://picsum.photos/100/100?random=$" alt=""></a>
         </div>
-    </header>
-    </header>
+    </header> -->
 
     <main>
         <div class="left">
