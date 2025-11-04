@@ -10,6 +10,7 @@ import {
     onSnapshot,
 } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 
 const firebaseConfig = {
     apiKey: 'AIzaSyDP88zVX_yPRwOKZl_xJxqjph2GFBNuk2o',
@@ -32,6 +33,22 @@ const db = getFirestore(app);
 // --- end Firebase init ---
 
 const apiKey = 'CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI';
+
+// ---------- DOM refs ----------
+// We'll look up display-name elements when auth state resolves
+
+// Initialize Firebase Auth and update UI when user signs in/out
+const auth = getAuth(app);
+onAuthStateChanged(auth, (user) => {
+    const displayNameEls = document.querySelectorAll('#display-name');
+    if (!displayNameEls || !displayNameEls.length) return;
+    if (user) {
+        const name = user.displayName || user.email || 'No name';
+        displayNameEls.forEach((el) => (el.textContent = name));
+    } else {
+        displayNameEls.forEach((el) => (el.textContent = 'Not signed in'));
+    }
+});
 
 /* ===== BookBoxes demo (optional) ===== */
 const BOOKBOXES = [
