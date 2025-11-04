@@ -161,9 +161,9 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 
 
-//URL parameter
+//URL parameter - support both "id" and "libraryId" for backwards compatibility
 const params = new URLSearchParams(window.location.search);
-const boxId = params.get("libraryId") || "lib_001";
+const boxId = params.get("id") || params.get("libraryId") || null;
 
 //DOM
 const boxName = document.getElementById("boxName");
@@ -208,85 +208,123 @@ stars.forEach((star, index1) => {
 
 //Firestoreからデータを読み込み
 function loadBox() {
-  const allBoxes = collection(db, "streetLibraries");
+  if (!boxId) {
+    boxName.textContent = "BookBox ID not provided";
+    boxAddress.textContent = "Please provide a valid BookBox ID";
+    return Promise.resolve();
+  }
 
-  return getDocs(allBoxes)
-    .then((boxSnap) => {
+  // Try to get document directly by ID first (faster)
+  const boxDocRef = doc(db, "streetLibraries", boxId);
+  
+  return getDoc(boxDocRef)
+    .then((docSnap) => {
       let foundBox = null;
 
-      boxSnap.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (docSnap.id === boxId || data.libraryId === boxId) {
-          foundBox = { id: docSnap.id, ...data };
-        }
-      });
+      if (docSnap.exists()) {
+        // Found by direct ID
+        foundBox = { id: docSnap.id, ...docSnap.data() };
+      } else {
+        // Fallback: search all boxes by libraryId (for backwards compatibility)
+        return getDocs(collection(db, "streetLibraries"))
+          .then((boxSnap) => {
+            let found = null;
+            boxSnap.forEach((docSnap) => {
+              const data = docSnap.data();
+              if (docSnap.id === boxId || data.libraryId === boxId) {
+                found = { id: docSnap.id, ...data };
+              }
+            });
+            return found;
+          });
+      }
 
+      return foundBox;
+    })
+    .then((foundBox) => {
       if (!foundBox) {
         boxName.textContent = "BookBox not found";
         boxAddress.textContent = "No matching address";
         return;
       }
 
-      boxName.textContent = foundBox.name;
-      boxAddress.textContent = foundBox.address;
+      boxName.textContent = foundBox.name || 'Unnamed BookBox';
+      boxAddress.textContent = foundBox.address || 'Address not available';
+      
       //既存の loadBox 内でボックスを見つけた後に↓を追加
       currentBoxRef = doc(db, "streetLibraries", foundBox.id);
-      initChatListener(currentBoxRef);
+      currentBox = currentBoxRef; // Set for review submission
       initChatListener(currentBoxRef);
 
-      const reviews = foundBox.reviews;
-      if (!reviews || reviews.length === 0) {
-        reviewsContainer.innerHTML = `<p>No reviews yet, add the first one!</p>`;
-        return;
+      const reviews = foundBox.reviews || [];
+      if (reviews.length === 0) {
+        if (reviewsContainer) {
+          reviewsContainer.innerHTML = `<p>No reviews yet, add the first one!</p>`;
+        }
+      } else {
+        displayAvgRating(reviews);
       }
 
-      displayAvgRating(reviews);
-
-      //images
+      //images - improved handling
       const imgContainer = document.getElementById("boxImages");
-      imgContainer.innerHTML = "";
+      if (imgContainer) {
+        imgContainer.innerHTML = "";
 
-      const img = foundBox.photoURL;
-      console.log("photoURL:", foundBox.photoURL);
-      console.log("type:", typeof foundBox.photoURL);
+        const photoURL = foundBox.photoURL;
+        console.log("photoURL:", photoURL);
+        console.log("type:", typeof photoURL);
 
-      if (img.length === 0) {
-        imgContainer.textContent = "No images yet, add the first one!"
-      } else {
-        img.forEach(url => {
-          const imgs = document.createElement("img");
-          imgs.src = url;
-          imgs.alt = "BookBox image";
-          imgs.className = "box-image";
-          imgContainer.appendChild(imgs);
-        })
-      };
+        // Check if photoURL is an array with images
+        if (Array.isArray(photoURL) && photoURL.length > 0) {
+          photoURL.forEach((url, index) => {
+            const imgs = document.createElement("img");
+            imgs.src = url;
+            imgs.alt = `BookBox image ${index + 1}`;
+            imgs.className = "box-image";
+            imgs.style.cursor = 'pointer';
+            // Add click to view larger functionality if needed
+            imgContainer.appendChild(imgs);
+          });
+        } else {
+          // No images available
+          const noImagesMsg = document.createElement("p");
+          noImagesMsg.textContent = "No images yet, add the first one!";
+          noImagesMsg.style.textAlign = "center";
+          noImagesMsg.style.padding = "2rem";
+          noImagesMsg.style.color = "#666";
+          imgContainer.appendChild(noImagesMsg);
+        }
+      }
 
       //review
-      reviewsContainer.innerHTML = "";
-      reviews.forEach((review) => {
-        const div = document.createElement("div");
-        div.className = "review";
+      if (reviewsContainer) {
+        reviewsContainer.innerHTML = "";
+        if (reviews && reviews.length > 0) {
+          reviews.forEach((review) => {
+            const div = document.createElement("div");
+            div.className = "review";
 
-        const reviewHeader = document.createElement("div");
-        reviewHeader.className = "reviewHeader";
-        const reviewText = document.createElement("p");
-        // reviewText.textContent = review.reviewText;
-        reviewHeader.innerHTML = `
-          <div class="reviewItem">
-              <img src="${review.avatarURL || 'https://i.pravatar.cc/50'}" alt="avatar" class="avatar">
-              <div class="reviewContent">
-                <div class="reviewHeader">
-                  <strong>${review.reviewerName || "Anonymous"}</strong>
-                  <span class="rating">⭐ ${review.rating || 0}</span>
-                </div>
-                <p class="reviewText">${review.reviewText || ""}</p>
-              </div>
-          </div>`;
+            const reviewHeader = document.createElement("div");
+            reviewHeader.className = "reviewHeader";
+            const reviewText = document.createElement("p");
+            // reviewText.textContent = review.reviewText;
+            reviewHeader.innerHTML = `
+              <div class="reviewItem">
+                  <img src="${review.avatarURL || 'https://i.pravatar.cc/50'}" alt="avatar" class="avatar">
+                  <div class="reviewContent">
+                    <div class="reviewHeader">
+                      <strong>${review.reviewerName || "Anonymous"}</strong>
+                      <span class="rating">⭐ ${review.rating || 0}</span>
+                    </div>
+                    <p class="reviewText">${review.reviewText || ""}</p>
+                  </div>
+              </div>`;
 
-        div.append(reviewHeader, reviewText);
-        reviewsContainer.appendChild(div);
-      });
+            div.append(reviewHeader, reviewText);
+            reviewsContainer.appendChild(div);
+          });
+        }
+      }
     })
     .catch((err) => {
       console.error("Cannot fetch box:", err);
