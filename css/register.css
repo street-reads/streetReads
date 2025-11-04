@@ -67,8 +67,8 @@ body {
 }
 
 .logo-icon {
-    width: 88px;
-    height: 64px;
+    width: 98px;
+    height: 72px;
     background-image: url('../src/206f9b18760fe54ba2f732f01f4ef6fb06e2774e.png');
     background-size: contain;
     background-repeat: no-repeat;
@@ -77,10 +77,11 @@ body {
 
 .logo-text {
     font-family: var(--font-display);
-    font-size: 64px;
+    font-size: 62px;
     font-weight: 400;
     line-height: 1.5;
     color: var(--color-secondary);
+    -webkit-text-stroke: 2px #A83838;
 }
 
 .welcome-text {
@@ -88,7 +89,7 @@ body {
     font-size: 40px;
     font-weight: 400;
     line-height: 1.5;
-    color: #4A90E2;
+    color: var(--color-primary);;
     font-style: italic;
     margin: 0;
 }
@@ -97,7 +98,7 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 24px;
+    gap: 12px;
 }
 
 .form-group {
@@ -174,9 +175,8 @@ input::placeholder {
 }
 
 .footer-link-center {
-    color: #4A90E2;
-    font-weight: 600;
-    text-decoration: none;
+    color: black;
+    text-decoration: underline;
     transition: color var(--transition-default);
 }
 
