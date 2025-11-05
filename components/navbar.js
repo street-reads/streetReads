@@ -14,7 +14,7 @@
             this.attachShadow({ mode: 'open' });
             this.state = {
                 brand: this.getAttribute('brand') || 'Street Reads',
-                avatar: this.getAttribute('avatar') || 'https://i.pravatar.cc/100?img=5',
+                avatar: this.getAttribute('avatar') || '',
             };
         }
 
@@ -23,24 +23,23 @@
             this.render();
         }
 
-    connectedCallback() {
-      this.render();
-      // emit a custom event when Avatar is clicked
-      this.shadowRoot.addEventListener('click', (e) => {
-        const avatar = e.target.closest('.avatar');
-        if (avatar) {
-          this.dispatchEvent(new CustomEvent('profile', { bubbles: true }));
-          return;
-        }
+        connectedCallback() {
+            this.render();
+            // emit a custom event when Avatar is clicked
+            this.shadowRoot.addEventListener('click', (e) => {
+                const avatar = e.target.closest('.avatar');
+                if (avatar) {
+                    window.location.href = '/pages/user-profile.html';
+                }
 
-        // clicking the brand (h1 or its inner link) should navigate to the homepage
-        const brand = e.target.closest('.brand, .brand-link');
-        if (brand) {
-          // use an absolute path to the pages homepage so it works from any route
-          window.location.href = '/pages/homepage.html';
+                // clicking the brand (h1 or its inner link) should navigate to the homepage
+                const brand = e.target.closest('.brand, .brand-link');
+                if (brand) {
+                    // use an absolute path to the pages homepage so it works from any route
+                    window.location.href = '/pages/homepage.html';
+                }
+            });
         }
-      });
-    }
 
         render() {
             const { brand, avatar } = this.state;

@@ -14,8 +14,29 @@ const firebaseConfig = {
     appId: '1:228045832951:web:4b6d868e05a72ab08a89f2',
 };
 
+// --- Avatar utilities ---
+const DEFAULT_AVATAR = '../src/avatar.png'; // <- keep your avatar.png here
+
+function resolveAvatarUrl(user) {
+    // Prefer explicit user photoURL, then cached avatar, then default
+    const fromUser = (user && typeof user.photoURL === 'string' && user.photoURL.trim()) || '';
+    const fromCache = localStorage.getItem('sr:avatar') || '';
+    return fromUser || fromCache || DEFAULT_AVATAR;
+}
+
+function applyAvatar(url) {
+    // Update the profile <img>, cache it, and notify the navbar
+    const profilePhoto = document.querySelector('#profile-photo');
+    if (profilePhoto) profilePhoto.src = url;
+
+    localStorage.setItem('sr:avatar', url);
+    window.dispatchEvent(new CustomEvent('avatar:changed', { detail: { url } }));
+}
+
+// PATCH: keep profile click from navbar (custom event) without forcing reload
 document.addEventListener('profile', () => {
-    window.location.reload(); // or just do nothing since already on profile page
+    // navigate if you want, or open a panel; for now do nothing
+    // window.location.href = '/pages/user-profile.html';
 });
 
 const app = initializeApp(firebaseConfig);
@@ -64,8 +85,15 @@ function showUserInfo(user) {
 
     // Photo
     if (profilePhoto) {
-        profilePhoto.src = user.photoURL || 'default-profile.png';
-        profilePhoto.alt = user.displayName || 'Profile photo';
+        // PATCH: use shared resolver + default, sync to navbar, and add error fallback
+        const avatarUrl = resolveAvatarUrl(user);
+        profilePhoto.src = avatarUrl;
+        profilePhoto.onerror = () => {
+            profilePhoto.onerror = null;
+            profilePhoto.src = DEFAULT_AVATAR;
+        };
+        localStorage.setItem('sr:avatar', avatarUrl);
+        window.dispatchEvent(new CustomEvent('avatar:changed', { detail: { url: avatarUrl } }));
     }
 
     // Name
@@ -100,6 +128,12 @@ function showUserInfo(user) {
         }
     }
 }
+
+// PATCH: listen for global avatar changes so profile page updates instantly too
+window.addEventListener('avatar:changed', (e) => {
+    const next = e?.detail?.url || DEFAULT_AVATAR;
+    if (profilePhoto) profilePhoto.src = next;
+});
 
 // ---------- Count contributions ----------
 async function countUserContribution(userId) {
@@ -223,9 +257,6 @@ function showAddedBoxes(addedBoxes) {
 
 // ---------- Main ----------
 async function main(userId) {
-    // TODO: replace with actual signed-in user id from Auth
-    // const loginUserId = 'users'; // placeholder used in your earlier code
-
     const user = await fetchUsers(userId);
     showUserInfo(user);
 
@@ -236,29 +267,31 @@ async function main(userId) {
 }
 
 // auth state
-onAuthStateChanged(auth, async (user) =>{
-if(user) {
-    console.log("logged in user: ", user.uid);
-    await main(user.uid);
-} else {
-    console.log("User not logged in redirecting...");
-    window.location.href = "../pages/login.html";
-}
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        console.log('logged in user: ', user.uid);
 
+        // PATCH: ensure navbar gets an avatar immediately on sign-in
+        const initialAvatar = resolveAvatarUrl(user);
+        localStorage.setItem('sr:avatar', initialAvatar);
+        window.dispatchEvent(new CustomEvent('avatar:changed', { detail: { url: initialAvatar } }));
+
+        await main(user.uid);
+    } else {
+        console.log('User not logged in redirecting...');
+        window.location.href = '../pages/login.html';
+    }
 });
 
 // logout
-
-if(logOut){
-    logOut.addEventListener("click", async() => {
+if (logOut) {
+    logOut.addEventListener('click', async () => {
         try {
             await signOut(auth);
-            console.log("Sing out");
-            window.location.href = "../pages/login.html";
+            console.log('Sign out');
+            window.location.href = '../pages/login.html';
         } catch (e) {
-            console.log("Sing out error: ", e);
+            console.log('Sign out error: ', e);
         }
     });
 }
-
-// main();
