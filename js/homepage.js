@@ -40,13 +40,17 @@ const apiKey = 'CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI';
 
 // Initialize Firebase Auth and update UI when user signs in/out
 const auth = getAuth(app);
+// track the current signed-in user's uid so we can set createdBy on new docs
+let currentUserId = null;
 onAuthStateChanged(auth, (user) => {
     const displayNameEls = document.querySelectorAll('#display-name');
     if (!displayNameEls || !displayNameEls.length) return;
     if (user) {
+        currentUserId = user.uid || null;
         const name = user.displayName || user.email || 'No name';
         displayNameEls.forEach((el) => (el.textContent = name));
     } else {
+        currentUserId = null;
         displayNameEls.forEach((el) => (el.textContent = 'Not signed in'));
     }
 });
@@ -387,7 +391,8 @@ async function createLibrary({ name, address, coords, photoURLs = [] }) {
         name: name ?? null,
         address: address ?? null,
         libraryId: null,
-        createdBy: null,
+        // attach the currently signed-in user's uid when available
+        createdBy: currentUserId ?? (auth?.currentUser?.uid ?? null),
         location: new GeoPoint(lat, lng),
         photoURL: Array.isArray(photoURLs) ? photoURLs : [],
         comments: [],
