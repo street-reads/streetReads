@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -5,8 +7,12 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
     background: white;
+    font-family: "Poppins", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 1.6;
 }
 
 header {
@@ -41,14 +47,43 @@ main {
     background: #fff;
     border-radius: 8px;
 
-    @media screen and (min-width: 900px) {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 5rem;
-    }
+    /* Use flex layout so left/right columns can match heights and allow
+       bottom-alignment of inner elements (like .reviewContainer and #chatContainer). */
+    display: flex;
+    align-items: stretch;
+    gap: 3rem;
+
+    /* On very small screens you may want columns to stack — allow wrapping. */
+    flex-wrap: wrap;
+}
+
+.left {
+    flex: 1; /* 左側を広めに */
+}
+
+.right {
+    flex: 1; /* 右側を左の半分くらいに */
+    display: flex;
+    flex-direction: column; /* 内部要素を縦に並べる */
+}
+
+.left, .right {
+    display: flex;
+    flex-direction: column;
+    /* Allow these flex children to shrink; avoid forcing a large fixed min-height.
+       Setting min-height: 0 is important so overflow works inside flex items. */
+    min-height: 0;
+    padding: 1rem; /* 余白を等しく */
 }
 
 /* BOOK BOX */
+#boxName {
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+    font-size: 32px;
+}
+
 .boxDetail {
     display: flex;
     /* align-items: center; */
@@ -119,8 +154,8 @@ main {
     grid-row: 1 / 3;
 }
 
-.images img:nth-of-type(n+4) {
-    grid-column: span 1;
+.images img:nth-of-type(4) {
+    grid-column: 7 / 9;
     grid-row: auto;
 }
 
@@ -142,8 +177,6 @@ main {
     align-items: center;
     gap: 1rem;
 }
-
-
 
 .fa-star {
     color: white;
@@ -175,8 +208,8 @@ main {
     flex-direction: column;
     justify-content: center;
     gap: 0.4rem;
-    width: 450px;
-    padding: 1.3rem;
+    width: 600px;
+    padding: 32px;
     min-height: 250px;
     z-index: 2;
     background-color: white;
@@ -200,28 +233,27 @@ main {
     background-color: #EBF2FF;
     border: 1px solid #ddd;
     border-radius: 5px;
-    font-size: 0.9em;
-    padding: 0.4rem;
+    font-size: 14px;
+    padding: 16px;
     height: 2rem;
 }
 
 .modal textarea {
     border: 1px solid #ddd;
     border-radius: 5px;
-    font-size: 0.9em;
+    font-size: 16px;
     height: 8rem;
-    padding: 0.4rem;
+    padding: 16px;
     background-color: #EBF2FF;
 }
 
 .form-title {
-    font-size: 1.5rem;
+    font-size: 18px;
     font-weight: bold;
 }
 
 .modal label {
-    font-size: 0.9rem;
-    font-weight: bold;
+    font-size: 18px;
     color: black;
     margin: 0.4rem 0 0.2rem;
 }
@@ -246,11 +278,12 @@ button {
 
 .btn {
     display: inline-block;
-    padding: 0.8rem 1.4rem;
+    padding: 12px 24px;
+    height: 56px;
     font-weight: 700;
     background-color: #4747D0;
     color: white;
-    border-radius: 5px;
+    border-radius: 8px;
     text-align: center;
     font-size: 1em;
 }
@@ -287,12 +320,19 @@ button {
 }
 
 /* REVIEW BOX*/
-.reviewContainer {
-    max-height: 250px;
-    overflow-y: auto;
-
+.p {
     margin-top: 30px;
-    margin-bottom: 30px;
+    font-weight: bold;
+
+}
+
+.reviewContainer {
+    /* Let the review box sit at the bottom of the left column by using
+       margin-top:auto. Make it scrollable with a reasonable max-height so
+       it stays responsive across screen sizes. */
+    margin-top: auto;
+    max-height: 40vh; /* responsive cap; adjust if you prefer a fixed px value */
+    overflow-y: auto;
     padding: 40px;
     border: solid 1px black;
     border-radius: 10px;
@@ -330,9 +370,13 @@ button {
 }
 
 #rateAvg span {
-    color: #333;
+    color: #4747D0;
     font-weight: 500;
     margin-left: 4px;
+}
+
+#rateAvg p {
+    color: #4747D0;
 }
 
 .right_heading {
@@ -344,15 +388,36 @@ button {
     display: flex;
     flex-direction: column;
 
+    /* Use flex so the chat container fills the right column height set by
+       the parent (.right). This lets its bottom align with .reviewContainer
+       (which uses margin-top:auto) across widths while keeping the top
+       visually in the same place. */
+    flex: 1 1 auto;
+    min-height: 0; /* allow internal scrolling inside this flex child */
     overflow-y: auto;
-    min-height: 910px;
-    max-height: 910px;
 
-    margin-top: 30px;
-    margin-bottom: 30px;
-    /* padding: 20px; */
+    padding: 30px;
     border: solid 1px black;
     border-radius: 10px;
+}
+
+/* For very wide screens ensure both columns are exactly the same height so
+   the bottom-aligned boxes (.reviewContainer and #chatContainer) line up.
+   We switch to grid at large widths to guarantee equal row height. */
+@media (min-width: 1500px) {
+    main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        align-items: stretch;
+    }
+
+    /* Keep left/right as flex columns so margin-top:auto inside works. */
+    .left, .right {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
 }
 
 /* .userContainer {
@@ -397,10 +462,6 @@ button {
 
 
     flex: 1;
-}
-
-#chatContainer {
-    padding: 10px;
 }
 
 #chatInputArea {
