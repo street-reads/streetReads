@@ -437,40 +437,15 @@ form.addEventListener("submit", (event) => {
 });
 
 //add fav
-//test
-const userId = "user_002";
-const userRef = doc(db, "users", userId);
-
-// onAuthStateChanged(auth, (user) => {
-//   if (user) {
-//     const userId = user.uid; 
-//     const userRef = doc(db, "users", userId);
-
-//     initFavorites(userRef);
-//   } else {
-//     console.log("User not logged in");
-//   }
-// });
-
-//DOM
+// -------------------- FAVORITES --------------------
 const favButton = document.getElementById("favButton");
 const favIcon = document.getElementById("favIcon");
 const favText = document.getElementById("favText");
 
-//check fav status
-const checkFavStatus = () => {
-  getDoc(userRef).then((snap) => {
-    if (!snap.exists()) return;
+let userRef = null; // ← グローバルに持つ
 
-    const data = snap.data();
-    const favorites = data.favorites || [];
-    const isFav = favorites.includes(boxId);
-    updateFavUI(isFav);
-  });
-};
-
-//update UI
-const updateFavUI = (isFav) => {
+// UI 更新関数
+function updateFavUI(isFav) {
   if (isFav) {
     favIcon.classList.replace("fa-regular", "fa-solid");
     favIcon.style.color = "#4747D0";
@@ -482,61 +457,67 @@ const updateFavUI = (isFav) => {
     favText.textContent = "Add to Favorites";
     favText.style.color = "";
   }
-};
+}
 
-//toggle
-const toggleFav = () => {
-  getDoc(userRef)
-    .then((snap) => {
-      if (!snap.exists()) {
-        console.error("User not found");
-        return;
-      }
+// 状態確認
+async function checkFavStatus() {
+  if (!userRef || !boxId) return;
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+  const favorites = snap.data().favorites || [];
+  const isFav = favorites.includes(boxId);
+  updateFavUI(isFav);
+}
 
-      const data = snap.data();
-      const favorites = data.favorites || [];
-      const isFav = favorites.includes(boxId);
+// クリックで追加/削除
+async function toggleFav() {
+  if (!userRef || !boxId) return;
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+  const favorites = snap.data().favorites || [];
+  const isFav = favorites.includes(boxId);
 
-      if (isFav) {
-        // 削除
-        updateDoc(userRef, {
-          favorites: arrayRemove(boxId)
-        })
-          .then(() => {
-            console.log("Removed from favorites");
-            updateFavUI(false);
-          });
-      } else {
-        // 追加
-        updateDoc(userRef, {
-          favorites: arrayUnion(boxId)
-        })
-          .then(() => {
-            console.log("Added to favorites");
-            updateFavUI(true);
-          });
-      }
-    });
-};
+  if (isFav) {
+    await updateDoc(userRef, { favorites: arrayRemove(boxId) });
+    updateFavUI(false);
+    console.log("Removed from favorites");
+  } else {
+    await updateDoc(userRef, { favorites: arrayUnion(boxId) });
+    updateFavUI(true);
+    console.log("Added to favorites");
+  }
+}
 
+// ログイン監視で初期化
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    console.log("Logged in for fav:", user.uid);
+    userRef = doc(db, "users", user.uid);
 
-
-//初期化処理
-getDoc(userRef)
-  .then((snap) => {
+    // user ドキュメントがなければ作成
+    const snap = await getDoc(userRef);
     if (!snap.exists()) {
-      return setDoc(userRef, { favorites: [] });
+      await setDoc(userRef, { favorites: [] });
     }
-  })
-  .then(() => {
-    console.log("User doc ready");
-    checkFavStatus();
+
+    await checkFavStatus();
 
     if (favButton) {
+      favButton.disabled = false;
       favButton.addEventListener("click", toggleFav);
     }
-  })
-  .catch((err) => console.error("Error initializing favorites:", err));
+  } else {
+    console.log("User not logged in - disabling fav button");
+    userRef = null;
+    if (favButton) {
+      favButton.disabled = true;
+      favText.textContent = "Log in to add favorites";
+      favIcon.classList.replace("fa-solid", "fa-regular");
+      favIcon.style.color = "";
+    }
+  }
+});
+
 
 
 
