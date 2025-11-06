@@ -42,8 +42,15 @@ main {
     padding: 1rem 10rem
 }
 
+h2 {
+    font-size: 2rem;
+}
 .searchbar {
-    margin: 2rem 0;
+    margin: 1rem 0 2rem 0;
+}
+
+.search .fa-filter {
+    margin: 0 0.5rem 0 0;
 }
 
 .search-field {
@@ -54,7 +61,7 @@ main {
     flex-wrap: wrap;
     justify-content: space-between;
 }
-.search .fa-solid {
+.search .fa-magnifying-glass {
     margin: 0 1rem;
 }
 
