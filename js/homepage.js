@@ -2,6 +2,8 @@
 import {
     getFirestore,
     getDocs,
+    query,
+    where,
     collection,
     doc,
     addDoc,
@@ -28,6 +30,8 @@ document.addEventListener('profile', () => {
 // map + marker registry
 let appMap = null;
 const markersById = new Map();
+// in-memory cache: libraryId -> count
+let favCounts = new Map();
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -134,8 +138,8 @@ function buildPopupEl(item) {
     const addrDiv = document.createElement('div');
     addrDiv.className = 'addr';
     const addrIcon = document.createElement('span');
-    addrIcon.className = 'icon';
-    addrIcon.textContent = '📍';
+    // addrIcon.className = 'icon';
+    // addrIcon.textContent = '📍';
     const addrText = document.createElement('span');
     addrText.textContent = item.address || '';
     addrDiv.appendChild(addrIcon);
@@ -146,15 +150,71 @@ function buildPopupEl(item) {
     meta.className = 'meta';
     const star = document.createElement('span');
     star.className = 'icon';
-    star.textContent = '⭐';
-    const rating = document.createElement('span');
-    rating.textContent = ratingText;
+    // Create a solid (filled) Font Awesome heart and color it
+    // NOTE: ensure Font Awesome CSS is loaded in your HTML for this to render
+    const heart = document.createElement('i');
+    heart.className = 'fa-solid fa-heart';
+    heart.setAttribute('aria-hidden', 'true');
+    heart.style.color = 'rgb(71, 71, 208)';
+    star.appendChild(heart);
+    // Favorite count placeholder (filled from cache first, then updated async)
+    const favCount = document.createElement('span');
+    favCount.className = 'fav-count';
+    // show cached value if available to avoid network round-trip
+    const cached = favCounts.get(item.id);
+    favCount.textContent = typeof cached === 'number' ? String(cached) : '0';
+    // Optional: aria label for accessibility
+    favCount.setAttribute('aria-label', 'Favorite count');
+
+    // Append icon and count to meta
     meta.appendChild(star);
-    meta.appendChild(rating);
+    meta.appendChild(favCount);
     el.appendChild(meta);
 
     return el;
 }
+
+// Fetch favorite count for a given libraryId and update the provided element
+async function fetchFavoriteCount(libraryId, el) {
+    if (!libraryId || !el) return;
+    try {
+        // In this project users store their favorites as an array field `favorites` inside each user doc.
+        // Count users whose `favorites` array contains this libraryId using `array-contains`.
+        const usersCol = collection(db, 'users');
+        const q = query(usersCol, where('favorites', 'array-contains', libraryId));
+        const snap = await getDocs(q);
+        const count = snap.size ?? (Array.isArray(snap.docs) ? snap.docs.length : 0);
+        el.textContent = String(count);
+    } catch (err) {
+        console.error('fetchFavoriteCount error', err);
+        el.textContent = '0';
+    }
+}
+
+// Build a one-time cache of favorite counts by scanning all user docs' favorites arrays.
+// This is simpler and cheaper than running an array-contains query for every popup when
+// you have a modest number of users. If your users collection is very large, consider
+// server-side aggregation (Cloud Function) instead.
+async function buildFavoriteCounts() {
+    try {
+        const usersCol = collection(db, 'users');
+        const snap = await getDocs(usersCol);
+        const map = new Map();
+        snap.docs.forEach((d) => {
+            const favs = d.data()?.favorites;
+            if (!Array.isArray(favs)) return;
+            favs.forEach((libId) => {
+                if (!libId) return;
+                map.set(libId, (map.get(libId) || 0) + 1);
+            });
+        });
+        favCounts = map;
+        console.debug('buildFavoriteCounts: done', favCounts);
+    } catch (e) {
+        console.warn('buildFavoriteCounts failed', e);
+    }
+}
+
 
 /* Add/Update/Remove markers from Firestore docs */
 function addOrUpdateMarkerFromDoc(map, docSnap) {
@@ -181,6 +241,14 @@ function addOrUpdateMarkerFromDoc(map, docSnap) {
         const el = document.createElement('div');
         el.className = 'marker-bookbox';
         const popup = new tt.Popup({ offset: 30 }).setDOMContent(buildPopupEl(item));
+        // After popup DOM is created, find the fav-count element inside and populate it
+        try {
+            const popupEl = popup.getDOMContent();
+            const favEl = popupEl.querySelector('.fav-count');
+            if (item.id && favEl) fetchFavoriteCount(item.id, favEl);
+        } catch (e) {
+            // non-critical
+        }
         // anchor bottom so the pin points to the coordinate and the SDK can handle placement
         const marker = new tt.Marker({ element: el, anchor: 'bottom' }).setLngLat(coords).setPopup(popup).addTo(map);
         markersById.set(id, { marker, popup });
@@ -407,7 +475,7 @@ async function createLibrary({ name, address, coords, photoURLs = [] }) {
     return docRef.id;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('Initializing map...');
 
     const mapContainer = document.getElementById('map');
@@ -431,11 +499,14 @@ document.addEventListener('DOMContentLoaded', function () {
         map.addControl(new tt.NavigationControl());
         map.addControl(new tt.FullscreenControl());
 
-        appMap = map;
+    appMap = map;
 
-        addBookboxMarkers(map, BOOKBOXES);
-        showUserLocation(map, { zoom: 12, follow: false });
-        startLibraryMarkersLive(map);
+    // build favorite counts cache before rendering markers/popups
+    await buildFavoriteCounts();
+
+    addBookboxMarkers(map, BOOKBOXES);
+    showUserLocation(map, { zoom: 12, follow: false });
+    startLibraryMarkersLive(map);
 
         console.log('Map initialized successfully!');
     } catch (error) {
