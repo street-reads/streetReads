@@ -555,3 +555,31 @@ h2 {
     font-size: .85rem;
     justify-content: flex-end;
 }
+
+@media (max-width: 900px) {
+
+    main {
+        padding: 0;
+    }
+
+    h2 {
+        margin: 2rem 1rem;
+    }
+    .searchbar {
+        margin: 1rem 1rem 2rem 1rem;
+    }
+    .filter-feild {
+        left: 30%;
+    }
+    /* On mobile make the map fill the remaining viewport height below the header
+       so the map reaches the bottom edge on all devices (respecting safe areas). */
+    html, body {
+        height: 100%;
+    }
+    #map {
+        border-radius: 0;
+        /* header height is 80px; subtract it from 100vh and account for safe-area inset */
+        height: calc(100vh - 80px - env(safe-area-inset-bottom, 0px));
+        min-height: 300px; /* fallback */
+    }
+}
