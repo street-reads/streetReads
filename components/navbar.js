@@ -107,6 +107,13 @@
             border-color: rgba(255, 255, 255, .85);
           }
 
+          /* mobile: slightly smaller brand text for narrow viewports */
+          @media (max-width: 900px) {
+            .brand-link {
+              font-size: 20px;
+            }
+          }
+
           /* allow consumers to put content on the right if needed */
           ::slotted(*) { margin-left: 8px; }
         </style>

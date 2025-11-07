@@ -563,7 +563,14 @@ h2 {
     }
 
     h2 {
-        margin: 2rem 1rem;
+        margin: 2rem 1rem 1rem 1rem;
+        font-size: 24px;
+
+    }
+
+
+    p {
+        font-size: 14px;
     }
     .searchbar {
         margin: 1rem 1rem 2rem 1rem;
@@ -571,6 +578,57 @@ h2 {
     .filter-feild {
         left: 30%;
     }
+    /* Show only the filter icon on mobile: hide the button text but keep the icon visible
+       and preserve a visible outline/border for the button. */
+    .search .filterBtn {
+        /* collapse text (font-size:0) while keeping icon size via i{} */
+        font-size: 0;
+        width: 44px;
+        height: 40px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        /* background: transparent;  */
+        /* keep transparent background on mobile */
+        border: 1px solid #C5BAD4; /* keep a visible outline */
+        box-shadow: none;
+        cursor: pointer;
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .search .filterBtn i {
+        font-size: 18px; /* icon size */
+        color: #4747D0;
+        -webkit-text-stroke: 0;
+        -webkit-text-fill-color: #4747D0;
+        color: #4747D0;
+    }
+
+    /* If the icon uses outline-filter class, preserve the stroked outline style on mobile */
+    .search .filterBtn i.outline-filter {
+        color: transparent; /* keep the outline look */
+        -webkit-text-stroke: 2px #4747D0;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    .addBox button {
+        padding: 0.5rem;
+        background-color: #4747D0;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Poppins';
+        font-weight: 600;
+        height: 40px;
+        width: 88px;
+        font-size: 10px;
+    }
+
     /* On mobile make the map fill the remaining viewport height below the header
        so the map reaches the bottom edge on all devices (respecting safe areas). */
     html, body {
