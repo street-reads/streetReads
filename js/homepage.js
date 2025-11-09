@@ -953,7 +953,7 @@ async function searchBookboxByAddress() {
 // Recently updated//
 
 /*
- Show only BookBoxes created or updated within the last `days` days.
+ Show only BookBoxes created or updated within the last `1days` days.
  */
 async function showRecentlyUpdated(map = appMap, days = 1) {
     if (!map) {
@@ -1006,12 +1006,36 @@ async function showRecentlyUpdated(map = appMap, days = 1) {
     if (!btn) return;
     btn.addEventListener('click', (e) => {
         // if the checkbox exists, respect it; otherwise default to running
-        const recentCb = document.getElementById('recently-updated');
-        const nearbyCb = document.getElementById('nearby');
+    const recentCb = document.getElementById('recently-updated');
+    const nearbyCb = document.getElementById('nearby');
+    const mostPopularCb = document.getElementById('most-popular');
         // Nearby takes precedence if checked
         if (nearbyCb && nearbyCb.checked) {
             nearbyMe(appMap, 1000);
             // close filter UI
+            const ff = document.getElementById('filterFeild');
+            if (ff) ff.style.display = 'none';
+            return;
+        }
+        // Most Popular takes next precedence
+        if (mostPopularCb && mostPopularCb.checked) {
+            mostPopular(appMap);
+            const ff = document.getElementById('filterFeild');
+            if (ff) ff.style.display = 'none';
+            return;
+        }
+        // Most Liked
+        const mostLikedCb = document.getElementById('most-liked');
+        if (mostLikedCb && mostLikedCb.checked) {
+            mostLiked(appMap);
+            const ff = document.getElementById('filterFeild');
+            if (ff) ff.style.display = 'none';
+            return;
+        }
+        // Most commented
+        const mostcommentedCb = document.getElementById('most-commented');
+        if (mostcommentedCb && mostcommentedCb.checked) {
+            mostCommented(appMap);
             const ff = document.getElementById('filterFeild');
             if (ff) ff.style.display = 'none';
             return;
@@ -1121,4 +1145,150 @@ async function nearbyMe(map = appMap, meters = 1000) {
 
 //Most Popular
 
+async function mostPopular(map = appMap) {
+    if (!map) {
+        console.warn('Most popular bookbox: map not available');
+        return;
+    }
 
+    try {
+        const colRef = collection(db, 'streetLibraries');
+        const snap = await getDocs(colRef);
+        // Find the maximum averageRating and keep the doc(s) that match it (handle ties)
+        let maxRating = -Infinity;
+        const bestIds = new Set();
+
+        snap.docs.forEach((d) => {
+            const data = d.data() || {};
+            const avg = typeof data.averageRating === 'number' ? data.averageRating : Number(data.averageRating);
+            if (!Number.isFinite(avg)) return;
+            if (avg > maxRating) {
+                maxRating = avg;
+                bestIds.clear();
+                bestIds.add(d.id);
+            } else if (avg === maxRating) {
+                bestIds.add(d.id);
+            }
+        });
+
+        if (bestIds.size === 0) {
+            alert('No rated BookBoxes found. Try adding ratings first.');
+            return;
+        }
+
+        // Remove markers that are not among the most popular
+        for (const id of Array.from(markersById.keys())) {
+            if (!bestIds.has(id)) removeMarkerById(id);
+        }
+
+        // Add/update markers for the top-rated docs
+        for (const doc of snap.docs) {
+            if (bestIds.has(doc.id)) addOrUpdateMarkerFromDoc(map, doc);
+        }
+    } catch (err) {
+        console.error('mostPopular error', err);
+        alert('Failed to compute most popular BookBoxes. See console.');
+    }
+}
+
+
+//Most Liked
+async function mostLiked(map = appMap) {
+    if (!map) {
+        console.warn('Most Liked bookbox: map not available');
+        return;
+    }
+    try {
+        // Ensure we have a favorites cache; build it if empty
+        if (!favCounts || favCounts.size === 0) {
+            await buildFavoriteCounts();
+        }
+
+        const colRef = collection(db, 'streetLibraries');
+        const snap = await getDocs(colRef);
+
+        // Determine the max favorite count among all libraries (treat missing as 0)
+        let maxCount = -Infinity;
+        const bestIds = new Set();
+
+        snap.docs.forEach((d) => {
+            const id = d.id;
+            const count = Number(favCounts.get(id) || 0);
+            if (!Number.isFinite(count)) return;
+            if (count > maxCount) {
+                maxCount = count;
+                bestIds.clear();
+                bestIds.add(id);
+            } else if (count === maxCount) {
+                bestIds.add(id);
+            }
+        });
+
+        if (bestIds.size === 0 || maxCount <= 0) {
+            alert('No liked BookBoxes found yet. Encourage users to favorite some!');
+            return;
+        }
+
+        // Remove markers that are not among the most liked
+        for (const id of Array.from(markersById.keys())) {
+            if (!bestIds.has(id)) removeMarkerById(id);
+        }
+
+        // Add/update markers for the most-liked docs
+        for (const doc of snap.docs) {
+            if (bestIds.has(doc.id)) addOrUpdateMarkerFromDoc(map, doc);
+        }
+    } catch (err) {
+        console.error('mostLiked error', err);
+        alert('Failed to compute most-liked BookBoxes. See console.');
+    }
+}
+
+
+// Most commented
+
+async function mostCommented(map = appMap) {
+    if (!map) {
+        console.warn('Most commented bookbox: map not available');
+        return;
+    }
+
+    try {
+        const colRef = collection(db, 'streetLibraries');
+        const snap = await getDocs(colRef);
+        // Find the maximum number of comments and keep the doc(s) that match it (handle ties)
+        let maxComments = -Infinity;
+        const bestIds = new Set();
+
+        snap.docs.forEach((d) => {
+            const data = d.data() || {};
+            const comments = Array.isArray(data.comments) ? data.comments.length : 0;
+            const count = Number.isFinite(comments) ? comments : 0;
+            if (count > maxComments) {
+                maxComments = count;
+                bestIds.clear();
+                bestIds.add(d.id);
+            } else if (count === maxComments) {
+                bestIds.add(d.id);
+            }
+        });
+
+        if (bestIds.size === 0 || maxComments <= 0) {
+            alert('No comments found on any BookBoxes yet.');
+            return;
+        }
+
+        // Remove markers that are not among the most commented
+        for (const id of Array.from(markersById.keys())) {
+            if (!bestIds.has(id)) removeMarkerById(id);
+        }
+
+        // Add/update markers for the most-commented docs
+        for (const doc of snap.docs) {
+            if (bestIds.has(doc.id)) addOrUpdateMarkerFromDoc(map, doc);
+        }
+    } catch (err) {
+        console.error('mostCommented error', err);
+        alert('Failed to compute most commented BookBoxes. See console.');
+    }
+}
