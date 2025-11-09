@@ -339,21 +339,32 @@ loadBox();
 addBoxPicBtn.addEventListener("click", () => boxPicInput.click());
 
 boxPicInput.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file || !currentUser) return alert("Please log in to add a picture.");
+  const files = Array.from(e.target.files);
+  if (!files.length || !currentUser) {
+    alert("ログインしてからアップロードしてください。");
+    return;
+  }
 
-  const fileRef = ref(storage, `boxImages/${currentBoxRef.id}/${Date.now()}_${file.name}`);
   try {
-    await uploadBytes(fileRef, file);
-    const url = await getDownloadURL(fileRef);
-    await updateDoc(currentBoxRef, { photoURL: arrayUnion(url) });
-    alert("Picture added!");
-    loadBox(); // 画面を更新
+    const urls = await uploadBookBoxImages(files, currentBoxRef.id);
+
+    await updateDoc(currentBoxRef, {
+      photoURL: arrayUnion(...urls)
+    });
+
+    alert("success uploading your image!");
+    // ボックス詳細ページが別ファイルなら、そこに reload 通知を送る
+    window.dispatchEvent(new CustomEvent("boxImagesUpdated"));
   } catch (err) {
     console.error(err);
-    alert("Failed to upload picture.");
+    alert("Failed uploading your image...");
   }
 });
+
+window.addEventListener("boxImagesUpdated", () => {
+  loadBox(); // ← 画像一覧を再取得する関数
+});
+
 
 
 //calculate average rating
@@ -374,7 +385,7 @@ function displayAvgRating(reviews) {
   let avg = sum / ratings.length;
   avg = avg.toFixed(1);
 
-  let starsHTML = "";
+  let starsHTML = '<div class="rateStars">';
   const totalStars = 5;
 
   for (let i = 0; i < totalStars; i++) {
@@ -398,11 +409,37 @@ function displayAvgRating(reviews) {
 
   console.log("average:", avg);
 
+  starsHTML += '</div>';
+
   const reviewCount = reviews.length;
-  rateBox.innerHTML = `
-  ${starsHTML} <span>${avg}</span>
-  <p> ${reviewCount} reviews</p>
-  `;
+rateBox.innerHTML = `
+  <div class="starsAvg">${starsHTML}</div>
+  <div class="rating-info">
+    <span class="avg">${avg}</span>
+    <p>${reviewCount} reviews</p>
+  </div>
+`;
+
+}
+
+async function updateAverageRating(boxRef) {
+  const boxSnap = await getDoc(boxRef);
+  if (!boxSnap.exists()) return;
+
+  const data = boxSnap.data();
+  const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+
+  // 数値として有効な rating だけ抽出
+  const validRatings = reviews
+    .map(r => typeof r.rating === "string" ? parseFloat(r.rating) : r.rating)
+    .filter(r => typeof r === "number" && !isNaN(r));
+
+  const avg = validRatings.length > 0
+    ? validRatings.reduce((a, b) => a + b, 0) / validRatings.length
+    : null;
+
+  await updateDoc(boxRef, { averageRating: avg });
+  console.log(`✅ Updated averageRating for ${boxRef.id}: ${avg}`);
 }
 
 //レビュー送信
@@ -423,7 +460,8 @@ form.addEventListener("submit", (event) => {
   updateDoc(currentBox, {
     reviews: arrayUnion(newReview)
   })
-    .then(() => {
+    .then(async() => {
+      await updateAverageRating(currentBox);
       alert("Your review was submitted successfully!");
       form.reset();
       selectedStar = 0;
@@ -437,14 +475,13 @@ form.addEventListener("submit", (event) => {
 });
 
 //add fav
-// -------------------- FAVORITES --------------------
 const favButton = document.getElementById("favButton");
 const favIcon = document.getElementById("favIcon");
 const favText = document.getElementById("favText");
 
-let userRef = null; // ← グローバルに持つ
+let userRef = null;
 
-// UI 更新関数
+//UI 
 function updateFavUI(isFav) {
   if (isFav) {
     favIcon.classList.replace("fa-regular", "fa-solid");
@@ -459,7 +496,7 @@ function updateFavUI(isFav) {
   }
 }
 
-// 状態確認
+//状態確認
 async function checkFavStatus() {
   if (!userRef || !boxId) return;
   const snap = await getDoc(userRef);
@@ -469,7 +506,7 @@ async function checkFavStatus() {
   updateFavUI(isFav);
 }
 
-// クリックで追加/削除
+//クリックで追加/削除
 async function toggleFav() {
   if (!userRef || !boxId) return;
   const snap = await getDoc(userRef);
@@ -488,10 +525,10 @@ async function toggleFav() {
   }
 }
 
-// ログイン監視で初期化
+//ログイン監視で初期化
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    console.log("Logged in for fav:", user.uid);
+    console.log("Logged in as:", user.uid);
     userRef = doc(db, "users", user.uid);
 
     // user ドキュメントがなければ作成
@@ -564,6 +601,130 @@ const attachImg = document.getElementById("attachImg");
 //Firestoreドキュメント参照をグローバルに
 let currentBoxRef = null;
 
+// function initChatListener(boxRef) {
+//   onSnapshot(boxRef, (snap) => {
+//     if (snap.exists()) {
+//       const data = snap.data();
+//       const comments = data.comments || [];
+//       renderMessages(comments);
+//     } else {
+//       console.log("Document not found");
+//     }
+//   });
+// }
+
+//chat
+// function renderMessages(comments) {
+//   console.log(comments);
+
+//   messages.innerHTML = "";
+
+//   comments.forEach((msg) => {
+//     const when = msg.createdAt?.toDate
+//       ? msg.createdAt.toDate().toLocaleString([], {
+//         month: "short",
+//         day: "numeric",
+//         hour: "numeric",
+//         minute: "2-digit",
+//       })
+//       : "";
+
+// const userAvatar = msg.avatarURL || "https://i.pravatar.cc/50";
+// const imageSection = msg.commentImg 
+//   ? `<div class="sentImage"><img src="${msg.commentImg}" alt="attached image"></div>` 
+//   : "";
+
+
+
+//     const item = document.createElement("div");
+//     item.className = "chatItem";
+//     item.innerHTML = `
+//       <div class="commentItem">
+//         <img src="${userAvatar}" alt="avatar" class="avatar">
+//         <div class="perUser">
+//           <div class="userInfo">
+//             <div class="who">${msg.userId || "Anonymous"}</div>
+//             <div class="when">${when}</div>
+//           </div>
+//           <div class="text">${msg.commentText || ""}</div>
+//           ${imageSection}
+//         </div>
+//       </div>
+//     `;
+//     messages.appendChild(item);
+//   });
+
+//   messages.scrollTop = messages.scrollHeight;
+// }
+
+
+//send msg
+//cash
+const userCache = {};
+
+// UID から displayName を取得
+async function getUserName(uid) {
+  if (!uid) return "Anonymous";
+  if (userCache[uid]) return userCache[uid];
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    if (userDoc.exists()) {
+      const name = userDoc.data().displayName || "No name";
+      userCache[uid] = name;
+      return name;
+    } else {
+      return "Anonymous";
+    }
+  } catch (err) {
+    console.error("Error fetching user name:", err);
+    return "Anonymous";
+  }
+}
+
+//display msg
+async function renderMessages(comments) {
+  messages.innerHTML = "";
+
+  for (const msg of comments) {
+    const when = msg.createdAt?.toDate
+      ? msg.createdAt.toDate().toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      : "";
+
+    const userAvatar = msg.avatarURL || "https://i.pravatar.cc/50";
+    const imageSection = msg.commentImg
+      ? `<div class="sentImage"><img src="${msg.commentImg}" alt="attached image"></div>`
+      : "";
+
+    const userName = await getUserName(msg.userId);
+
+    const item = document.createElement("div");
+    item.className = "chatItem";
+    item.innerHTML = `
+      <div class="commentItem">
+        <img src="${userAvatar}" alt="avatar" class="avatar">
+        <div class="perUser">
+          <div class="userInfo">
+            <div class="who">${userName}</div>
+            <div class="when">${when}</div>
+          </div>
+          <div class="text">${msg.commentText || ""}</div>
+          ${imageSection}
+        </div>
+      </div>
+    `;
+    messages.appendChild(item);
+  }
+
+  messages.scrollTop = messages.scrollHeight;
+}
+
+//chat listener
 function initChatListener(boxRef) {
   onSnapshot(boxRef, (snap) => {
     if (snap.exists()) {
@@ -576,52 +737,7 @@ function initChatListener(boxRef) {
   });
 }
 
-//chat
-function renderMessages(comments) {
-  console.log(comments);
-
-  messages.innerHTML = "";
-
-  comments.forEach((msg) => {
-    const when = msg.createdAt?.toDate
-      ? msg.createdAt.toDate().toLocaleString([], {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-      : "";
-
-const userAvatar = msg.avatarURL || "https://i.pravatar.cc/50";
-const imageSection = msg.commentImg 
-  ? `<div class="sentImage"><img src="${msg.commentImg}" alt="attached image"></div>` 
-  : "";
-
-
-
-    const item = document.createElement("div");
-    item.className = "chatItem";
-    item.innerHTML = `
-      <div class="commentItem">
-        <img src="${userAvatar}" alt="avatar" class="avatar">
-        <div class="perUser">
-          <div class="userInfo">
-            <div class="who">${msg.userId || "Anonymous"}</div>
-            <div class="when">${when}</div>
-          </div>
-          <div class="text">${msg.commentText || ""}</div>
-          ${imageSection}
-        </div>
-      </div>
-    `;
-    messages.appendChild(item);
-  });
-
-  messages.scrollTop = messages.scrollHeight;
-}
-
-
-//send msg
+//send message
 sendBtn.addEventListener("click", async () => {
   const text = chatInput.value.trim();
   if (!text) return;
@@ -634,10 +750,9 @@ sendBtn.addEventListener("click", async () => {
 
   const newComment = {
     commentText: text,
-    // commentImg: user.photoURL || "https://i.pravatar.cc/50",
     createdAt: new Date(),
-    parentCommentId: "",
-    userId: user.displayName || "Anonymous",
+    userId: user.uid,
+    avatarURL: user.photoURL || "https://i.pravatar.cc/60",
   };
 
   if (!currentBoxRef) {
@@ -645,16 +760,18 @@ sendBtn.addEventListener("click", async () => {
     return;
   }
 
-  await updateDoc(currentBoxRef, {
-    comments: arrayUnion(newComment),
-  })
-    .then(() => {
-      chatInput.value = "";
-    })
-    .catch((err) => console.error("Error adding comment:", err));
+  try {
+    await updateDoc(currentBoxRef, {
+      comments: arrayUnion(newComment),
+    });
+
+    chatInput.value = "";
+  } catch (err) {
+    console.error("Error adding comment:", err);
+  }
 });
 
-// Enterキー送信
+// Enterキーで送信
 chatInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -662,45 +779,43 @@ chatInput.addEventListener("keydown", (e) => {
   }
 });
 
-const attachBtn = document.getElementById("attachImgBtn");
-const attachInput = document.getElementById("attachInput");
+//attach image
+attachBtn.addEventListener("click", () => attachInput.click());
 
-attachBtn.addEventListener("click", () => {
-  attachInput.click();
-});
+// チャット送信イベント
+chatContainer.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-attachInput.addEventListener("change", async () => {
-  const file = attachInput.files[0];
-  if (!file) return;
+  const messageText = chatInput.value.trim();
+  const imageFile = chatImageInput.files[0];
+  if (!messageText && !imageFile) return;
 
-  const user = auth.currentUser;
-  if (!user) {
-    alert("Please log in to send an image.");
-    return;
+  let imageUrl = null;
+
+  if (imageFile) {
+    try {
+      // ✅ Cloudinaryにアップロード
+      imageUrl = await uploadImage(imageFile, `chat/${currentBoxRef.id}`);
+      console.log("Chat image uploaded:", imageUrl);
+    } catch (error) {
+      console.error("Failed to upload chat image:", error);
+      alert("画像のアップロードに失敗しました");
+      return;
+    }
   }
 
-  const fileRef = ref(storage, `chatImages/${currentBoxRef.id}/${Date.now()}_${file.name}`);
+  // ✅ Firestoreに保存
+  await addDoc(collection(currentBoxRef, "messages"), {
+    text: messageText,
+    imageUrl: imageUrl || "",
+    user: currentUser.uid,
+    userName: currentUser.displayName || "Anonymous",
+    createdAt: serverTimestamp(),
+  });
 
-  try {
-    await uploadBytes(fileRef, file);
-    const url = await getDownloadURL(fileRef);
-
-    const imageComment = {
-      commentText: "",
-      commentImg: url,
-      createdAt: new Date(),
-      userId: user.displayName || "Anonymous",
-      avatarURL: currentUser?.photoURL || "https://i.pravatar.cc/60",
-    };
-
-    await updateDoc(currentBoxRef, {
-      comments: arrayUnion(imageComment),
-    });
-
-    console.log("Image sent:", url);
-  } catch (err) {
-    console.error("Error uploading image:", err);
-    alert("Failed to send image.");
-  }
+  chatInput.value = "";
+  chatImageInput.value = "";
 });
+
+
 

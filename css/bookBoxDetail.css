@@ -58,22 +58,27 @@ main {
 }
 
 .left {
-    flex: 1; /* 左側を広めに */
+    flex: 1;
+    /* 左側を広めに */
 }
 
 .right {
-    flex: 1; /* 右側を左の半分くらいに */
+    flex: 1;
+    /* 右側を左の半分くらいに */
     display: flex;
-    flex-direction: column; /* 内部要素を縦に並べる */
+    flex-direction: column;
+    /* 内部要素を縦に並べる */
 }
 
-.left, .right {
+.left,
+.right {
     display: flex;
     flex-direction: column;
     /* Allow these flex children to shrink; avoid forcing a large fixed min-height.
        Setting min-height: 0 is important so overflow works inside flex items. */
     min-height: 0;
-    padding: 1rem; /* 余白を等しく */
+    padding: 1rem;
+    /* 余白を等しく */
 }
 
 /* BOOK BOX */
@@ -167,18 +172,18 @@ main {
     gap: 1rem;
 }
 
-.rateBox p {
+/* .rateBox p {
     margin-right: 0.5rem;
-    /* color: #4747D0; */
-}
+    color: #4747D0;
+} */
 
 .rateContainer {
     display: flex;
-    align-items: center;
+    /* align-items: center; */
     gap: 1rem;
 }
 
-.fa-star {
+#rating .fa-star {
     color: white;
     -webkit-text-stroke: 3px #4747D0;
 }
@@ -331,7 +336,8 @@ button {
        margin-top:auto. Make it scrollable with a reasonable max-height so
        it stays responsive across screen sizes. */
     margin-top: auto;
-    max-height: 40vh; /* responsive cap; adjust if you prefer a fixed px value */
+    max-height: 40vh;
+    /* responsive cap; adjust if you prefer a fixed px value */
     overflow-y: auto;
     padding: 40px;
     border: solid 1px black;
@@ -365,14 +371,34 @@ button {
     color: #4747D0;
 }
 
-#rateAvg i.fa-regular {
+/* #rateAvg i.fa-regular {
     color: #ccc;
+} */
+
+#rateAvg {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    /* align-items: center; */
+    gap: 4px;
+}
+
+#rateAvg .starsAvg {
+    display: flex;
+    gap: 4px;
+    font-size: 1.4rem;
+}
+
+#rateAvg .rating-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 #rateAvg span {
     color: #4747D0;
     font-weight: 500;
-    margin-left: 4px;
+    /* margin-left: 4px; */
 }
 
 #rateAvg p {
@@ -381,6 +407,22 @@ button {
 
 .right_heading {
     font-weight: bold;
+}
+
+.rateStars {
+    background-image: repeating-linear-gradient(0deg, #333333, #333333 10px, transparent 10px, transparent 22px, #333333 22px), repeating-linear-gradient(90deg, #333333, #333333 10px, transparent 10px, transparent 22px, #333333 22px), repeating-linear-gradient(180deg, #333333, #333333 10px, transparent 10px, transparent 22px, #333333 22px), repeating-linear-gradient(270deg, #333333, #333333 10px, transparent 10px, transparent 22px, #333333 22px);
+    background-size: 2px 100%, 100% 2px, 2px 100%, 100% 2px;
+    background-position: 0 0, 0 0, 100% 0, 0 100%;
+    background-repeat: no-repeat;
+
+    border-radius: 6px;
+    /* ← 角丸 */
+    background-clip: padding-box;
+    /* ← 背景が角丸の外に出ないように */
+    overflow: hidden;
+    /* ← 内側の要素も角に合わせて切る */
+
+    padding: 10px 24px;
 }
 
 /* CHAT */
@@ -393,7 +435,8 @@ button {
        (which uses margin-top:auto) across widths while keeping the top
        visually in the same place. */
     flex: 1 1 auto;
-    min-height: 0; /* allow internal scrolling inside this flex child */
+    min-height: 0;
+    /* allow internal scrolling inside this flex child */
     overflow-y: auto;
 
     padding: 30px;
@@ -413,7 +456,8 @@ button {
     }
 
     /* Keep left/right as flex columns so margin-top:auto inside works. */
-    .left, .right {
+    .left,
+    .right {
         display: flex;
         flex-direction: column;
         min-height: 0;
