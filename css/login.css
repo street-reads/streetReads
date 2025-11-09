@@ -68,7 +68,7 @@ body {
 
 .logo-icon {
     width: 98px;
-    height: 72px;
+    height: 90px;
     background-image: url('../src/206f9b18760fe54ba2f732f01f4ef6fb06e2774e.png');
     background-size: cover;
     background-repeat: no-repeat;
@@ -109,7 +109,7 @@ input[type="password"] {
     width: 100%;
     padding: 16px;
     border: 1px solid #E0E0E0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: var(--color-input);
     font-size: 15px;
     font-family: var(--font-body);
@@ -137,7 +137,7 @@ input::placeholder {
     background: var(--color-primary);
     color: var(--color-surface);
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 16px;
     font-weight: 600;
     font-family: var(--font-body);
