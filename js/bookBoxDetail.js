@@ -195,16 +195,16 @@ onAuthStateChanged(auth, (user) => {
 
 //stars
 const stars = document.querySelectorAll(".stars i");
-stars.forEach((star, index1) => {
-  star.addEventListener("click", () => {
+    stars.forEach((star, index1) => { 
+      star.addEventListener("click", () => { 
     selectedStar = index1 + 1;
-    stars.forEach((star, index2) => {
+        stars.forEach((star, index2) => { 
       index1 >= index2
         ? star.classList.add("active")
         : star.classList.remove("active");
+        }); 
+      }); 
     });
-  });
-});
 
 //Firestoreからデータを読み込み
 function loadBox() {
@@ -596,7 +596,8 @@ openModalBtn.addEventListener("click", openModal);
 const messages = document.getElementById("messages");
 const chatInput = document.getElementById("chatInput");
 const sendBtn = document.getElementById("sendBtn");
-const attachImg = document.getElementById("attachImg");
+const attachBtn = document.getElementById("attachBtn");
+const attachInput = document.getElementById("attachInput");
 
 //Firestoreドキュメント参照をグローバルに
 let currentBoxRef = null;
@@ -697,8 +698,10 @@ async function renderMessages(comments) {
       : "";
 
     const userAvatar = msg.avatarURL || "https://i.pravatar.cc/50";
-    const imageSection = msg.commentImg
-      ? `<div class="sentImage"><img src="${msg.commentImg}" alt="attached image"></div>`
+    // Support both commentImg and imageUrl field names
+    const imageUrl = msg.commentImg || msg.imageUrl || null;
+    const imageSection = imageUrl
+      ? `<div class="sentImage"><img src="${imageUrl}" alt="attached image" style="max-width: 300px; border-radius: 8px; margin-top: 8px;"></div>`
       : "";
 
     const userName = await getUserName(msg.userId);
@@ -740,7 +743,10 @@ function initChatListener(boxRef) {
 //send message
 sendBtn.addEventListener("click", async () => {
   const text = chatInput.value.trim();
-  if (!text) return;
+  const imageFile = attachInput?.files[0];
+  
+  // Need either text or image
+  if (!text && !imageFile) return;
 
   const user = auth.currentUser;
   if (!user) {
@@ -748,26 +754,56 @@ sendBtn.addEventListener("click", async () => {
     return;
   }
 
-  const newComment = {
-    commentText: text,
-    createdAt: new Date(),
-    userId: user.uid,
-    avatarURL: user.photoURL || "https://i.pravatar.cc/60",
-  };
-
   if (!currentBoxRef) {
     console.error("No currentBox reference yet.");
     return;
   }
 
   try {
+    let imageUrl = null;
+    
+    // Upload image if attached
+    if (imageFile) {
+      try {
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        
+        imageUrl = await window.uploadImage(imageFile, `chat/${currentBoxRef.id}`);
+        console.log("Chat image uploaded:", imageUrl);
+      } catch (uploadError) {
+        console.error("Failed to upload image:", uploadError);
+        alert("Failed to upload image: " + uploadError.message);
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        return;
+      }
+    }
+
+    // Create comment with text and/or image
+    const newComment = {
+      commentText: text || "",
+      commentImg: imageUrl || null,
+      createdAt: new Date(),
+      userId: user.uid,
+      avatarURL: user.photoURL || "https://i.pravatar.cc/60",
+    };
+
     await updateDoc(currentBoxRef, {
       comments: arrayUnion(newComment),
     });
 
+    // Clear inputs
     chatInput.value = "";
+    if (attachInput) attachInput.value = "";
+    
+    // Reset button
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
   } catch (err) {
     console.error("Error adding comment:", err);
+    alert("Failed to send message: " + err.message);
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
   }
 });
 
@@ -779,43 +815,63 @@ chatInput.addEventListener("keydown", (e) => {
   }
 });
 
-//attach image
-attachBtn.addEventListener("click", () => attachInput.click());
+//attach image button
+if (attachBtn && attachInput) {
+  attachBtn.addEventListener("click", () => attachInput.click());
 
-// チャット送信イベント
-chatContainer.addEventListener("submit", async (e) => {
-  e.preventDefault();
+  // Handle image attachment
+  attachInput.addEventListener("change", async (e) => {
+    const file = attachInput.files[0];
+    if (!file) return;
 
-  const messageText = chatInput.value.trim();
-  const imageFile = chatImageInput.files[0];
-  if (!messageText && !imageFile) return;
-
-  let imageUrl = null;
-
-  if (imageFile) {
-    try {
-      // ✅ Cloudinaryにアップロード
-      imageUrl = await uploadImage(imageFile, `chat/${currentBoxRef.id}`);
-      console.log("Chat image uploaded:", imageUrl);
-    } catch (error) {
-      console.error("Failed to upload chat image:", error);
-      alert("画像のアップロードに失敗しました");
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please log in to send an image.");
       return;
     }
-  }
 
-  // ✅ Firestoreに保存
-  await addDoc(collection(currentBoxRef, "messages"), {
-    text: messageText,
-    imageUrl: imageUrl || "",
-    user: currentUser.uid,
-    userName: currentUser.displayName || "Anonymous",
-    createdAt: serverTimestamp(),
+    if (!currentBoxRef) {
+      console.error("No currentBox reference yet.");
+      return;
+    }
+
+    try {
+      // Show loading state
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+      // Upload image to Cloudinary
+      const imageUrl = await window.uploadImage(file, `chat/${currentBoxRef.id}`);
+      console.log("Chat image uploaded:", imageUrl);
+
+      // Create comment with image
+      const imageComment = {
+        commentText: "",
+        commentImg: imageUrl,
+        createdAt: new Date(),
+        userId: user.uid,
+        avatarURL: user.photoURL || "https://i.pravatar.cc/60",
+      };
+
+      // Save to Firestore
+      await updateDoc(currentBoxRef, {
+        comments: arrayUnion(imageComment),
+      });
+
+      console.log("Image sent:", imageUrl);
+      
+      // Clear input
+      attachInput.value = "";
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      alert("Failed to send image: " + err.message);
+    } finally {
+      // Reset button
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+    }
   });
-
-  chatInput.value = "";
-  chatImageInput.value = "";
-});
+}
 
 
 
