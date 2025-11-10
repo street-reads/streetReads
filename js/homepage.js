@@ -517,6 +517,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     addBookboxField();
 });
 
+//filter only select one
+document.addEventListener('DOMContentLoaded', () => {
+  const inputs = document.querySelectorAll('input[name="filters"]');
+  inputs.forEach((el) => {
+    el.addEventListener('change', () => {
+      if (el.checked) {
+        inputs.forEach((other) => {
+          if (other !== el) other.checked = false;
+        });
+      }
+    });
+  });
+});
+
 // filter
 function filterPopup() {
     const filterBtn = document.getElementById('filterBtn');
