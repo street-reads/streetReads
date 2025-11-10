@@ -20,7 +20,10 @@
 <body>
 
   <!-- Header like screenshot -->
-  <app-navbar brand="Street Reads" href="/" avatar="../src/avatar.png">
+  <app-navbar brand="Street Reads" href="/" avatar="/images/me.jpg">
+        <a slot="nav" href="/explore">Explore</a>
+        <a slot="nav" href="/favorites">Favorites</a>
+        <button slot="actions" class="pill" onclick="location.href='/add'">Add BookBox</button>
     </app-navbar>
 
   <main class="layout">
@@ -65,7 +68,7 @@
         <div class="row">
           <div class="label">Password</div>
           <div class="value password-wrap">
-            <span id="password">••••••</span>
+            <span id="password">*******</span>
             <button class="icon-btn" id="toggle-eye" aria-label="Toggle password">
               <i class="fa-solid fa-eye"></i>
               <i class="fa-solid fa-eye-slash"></i>
@@ -131,6 +134,41 @@
       </div>
     </section>
   </main>
+
+  <!-- modal window for profile edit -->
+
+  <div id="editModal" class="editModal">
+    <div class="modalContent">
+      <i class="fa-solid fa-xmark"></i>
+      <h2 class="modalTitle">Edit Profile</h2>
+      <div class="photo-wrap">
+        <img id="modalPhoto" class="modalPhoto" src="https://i.pravatar.cc/160?img=12" alt="Profile photo" />
+        <i class="fa-solid fa-camera"></i>
+      </div>
+
+      <form id="editProfileForm" class="editProfileForm" method="post">
+        <div>
+          <label for="editName">Name</label>
+          <input type="text" id="editName">
+        </div>
+        <div>
+          <label for="editEmail">Email</label>
+          <input type="text" id="editEmail">
+        </div>
+        <div>
+          <label for="editLocation">Locatioin</label>
+          <input type="text" id="editLocation">
+        </div>
+        <h3>Privacy & Security</h3>
+        <div>
+          <label for="editPassword">Password</label>
+          <input type="text" id="editPassword">
+        </div>
+        <button type="submit" class="saveBtn" id="saveBtn">Save</button>
+      </form>
+
+    </div>
+  </div>
 
   <script type="module" src="../js/user-profile.js"></script>
 </body>

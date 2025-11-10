@@ -3,7 +3,7 @@
 // --- Firebase (v9 modular) ---
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
 
 const firebaseConfig = {
     apiKey: 'AIzaSyDP88zVX_yPRwOKZl_xJxqjph2GFBNuk2o',
@@ -14,30 +14,9 @@ const firebaseConfig = {
     appId: '1:228045832951:web:4b6d868e05a72ab08a89f2',
 };
 
-// --- Avatar utilities ---
-const DEFAULT_AVATAR = '../src/avatar.png'; // <- keep your avatar.png here
-
-function resolveAvatarUrl(user) {
-    // Prefer explicit user photoURL, then cached avatar, then default
-    const fromUser = (user && typeof user.photoURL === 'string' && user.photoURL.trim()) || '';
-    const fromCache = localStorage.getItem('sr:avatar') || '';
-    return fromUser || fromCache || DEFAULT_AVATAR;
-}
-
-function applyAvatar(url) {
-    // Update the profile <img>, cache it, and notify the navbar
-    const profilePhoto = document.querySelector('#profile-photo');
-    if (profilePhoto) profilePhoto.src = url;
-
-    localStorage.setItem('sr:avatar', url);
-    window.dispatchEvent(new CustomEvent('avatar:changed', { detail: { url } }));
-}
-
-// PATCH: keep profile click from navbar (custom event) without forcing reload
-document.addEventListener('profile', () => {
-    // navigate if you want, or open a panel; for now do nothing
-    // window.location.href = '/pages/user-profile.html';
-});
+// document.addEventListener('profile', () => {
+//     window.location.reload(); // or just do nothing since already on profile page
+// });
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -60,6 +39,18 @@ const addedBoxInfo = document.querySelector('#added-box-info');
 // Password + toggle
 const passwordEl = document.querySelector('#password');
 const toggle = document.getElementById('toggle-eye'); // <button id="toggle-eye"> with two icons inside
+
+// modal window
+const editIcon = document.querySelector(".fa-pen");
+const editModal = document.querySelector("#editModal");
+const closeIcon = document.querySelector(".fa-xmark");
+const modalPhoto = document.querySelector("#modalPhoto");
+const camera = document.querySelector(".fa-camera");
+const editName = document.querySelector("#editName");
+const editEmail = document.querySelector("#editEmail");
+const editLocation = document.querySelector("#editLocation");
+const editPassword = document.querySelector("#editPassword");
+const saveBtn = document.querySelector("#saveBtn");
 
 // ---------- Helpers ----------
 function mask(str) {
@@ -85,15 +76,8 @@ function showUserInfo(user) {
 
     // Photo
     if (profilePhoto) {
-        // PATCH: use shared resolver + default, sync to navbar, and add error fallback
-        const avatarUrl = resolveAvatarUrl(user);
-        profilePhoto.src = avatarUrl;
-        profilePhoto.onerror = () => {
-            profilePhoto.onerror = null;
-            profilePhoto.src = DEFAULT_AVATAR;
-        };
-        localStorage.setItem('sr:avatar', avatarUrl);
-        window.dispatchEvent(new CustomEvent('avatar:changed', { detail: { url: avatarUrl } }));
+        profilePhoto.src = user.photoURL || 'https://i.pravatar.cc/160?img=12';
+        profilePhoto.alt = user.displayName || 'Profile photo';
     }
 
     // Name
@@ -129,14 +113,8 @@ function showUserInfo(user) {
     }
 }
 
-// PATCH: listen for global avatar changes so profile page updates instantly too
-window.addEventListener('avatar:changed', (e) => {
-    const next = e?.detail?.url || DEFAULT_AVATAR;
-    if (profilePhoto) profilePhoto.src = next;
-});
-
 // ---------- Count contributions ----------
-async function countUserContribution(userId) {
+async function countUserContribution(userId, userDisplayName) {
     let totalComments = 0;
     let totalReviews = 0;
     let totalAddedBox = 0;
@@ -144,13 +122,18 @@ async function countUserContribution(userId) {
 
     const libraryCollection = collection(db, 'streetLibraries');
     const libraryDocs = await getDocs(libraryCollection);
+    const docsArray = libraryDocs.docs;
 
-    libraryDocs.forEach((libraryDoc) => {
+    docsArray.forEach((libraryDoc) => {
         const data = libraryDoc.data();
+        const libraryId = libraryDoc.id;
 
         if (data.createdBy === userId) {
             totalAddedBox++;
-            addedBoxes.push(data);
+            addedBoxes.push({
+                ...data,
+                libraryId: libraryId
+            });
         }
 
         if (Array.isArray(data.comments)) {
@@ -161,7 +144,14 @@ async function countUserContribution(userId) {
 
         if (Array.isArray(data.reviews)) {
             data.reviews.forEach((r) => {
-                if (r?.userId === userId) totalReviews++;
+                // Check if review belongs to user by userId or reviewerName matching user's displayName
+                const isUserReview = r?.userId === userId || 
+                                   (r?.reviewerName && userDisplayName && 
+                                    r.reviewerName.trim().toLowerCase() === userDisplayName.trim().toLowerCase());
+                
+                if (isUserReview) {
+                    totalReviews++;
+                }
             });
         }
     });
@@ -184,23 +174,29 @@ async function getFavorites(userId) {
         const userData = userSnap.data();
         const favorites = Array.isArray(userData.favorites) ? userData.favorites : [];
 
-        for (const fav of favorites) {
-            if (!fav?.libraryId) continue;
-            const libRef = doc(db, 'streetLibraries', fav.libraryId);
+
+        for (const libraryId of favorites) {
+            if (!libraryId) continue;
+
+            const libRef = doc(db, 'streetLibraries', libraryId);
             const libSnap = await getDoc(libRef);
+
             if (libSnap.exists()) {
                 const lib = libSnap.data();
+
                 out.push({
-                    libraryId: fav.libraryId,
-                    libraryName: lib.name,
-                    libraryAddress: lib.address,
-                    createdAt: fav.createdAt,
+                    libraryId,
+                    libraryName: lib.name || 'Unknown name',
+                    libraryAddress: lib.address  || 'No address',
+                
                 });
+            } else {
             }
         }
     } catch (e) {
-        console.error('getFavorites error:', e);
+        // Error fetching favorites
     }
+
     return out;
 }
 
@@ -218,15 +214,20 @@ async function showFavoriteBoxes(userId) {
         const div = document.createElement('div');
         div.className = 'favorite-bookbox';
         div.innerHTML = `
-      <img src="map-img.png" alt="Map preview">
-      <div class="box-detail">
-        <p>${fav.libraryName}</p>
-        <i class="fa-solid fa-location-dot"></i>
-        <div class="location-info">
-          <p>${fav.libraryAddress}</p>
-        </div>
+      <div class="book-box-info">
+        <img src="../src/0416f2714b3089cc44ed528f4660a254f40afa73.png" alt="Map preview" class="box-thumbnail">
+            <div class="box-detail">
+            <p class="box-name">${fav.libraryName}</p>
+                <div class="box-location">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>${fav.libraryAddress || 'Location'}</span>
+                </div>
+            </div>
       </div>
     `;
+        div.addEventListener('click', () => {
+         window.location.href = `bookBoxDetail.html?id=${fav.libraryId}`;
+        });
         favoriteBoxInfo.appendChild(div);
     });
 }
@@ -236,21 +237,34 @@ function showAddedBoxes(addedBoxes) {
     if (!addedBoxInfo) return;
     addedBoxInfo.innerHTML = '';
 
+    if (addedBoxes.length === 0) {
+        addedBoxInfo.innerHTML = '<p class="no-contributions">No book boxes added yet.</p>';
+        return;
+    }
+
     addedBoxes.forEach((data) => {
         const div = document.createElement('div');
         div.className = 'contribution-box';
+
+        const mapThumbnail = `<img src="../src/0416f2714b3089cc44ed528f4660a254f40afa73.png" alt="Map preview" class="box-thumbnail">`;
+
         div.innerHTML = `
       <div class="book-box-info">
-        <img src="map-img.png" alt="Map preview">
+      ${mapThumbnail}
         <div class="box-detail">
-          <p>${data.name || 'Book Box'}</p>
-          <i class="fa-solid fa-location-dot"></i>
-          <div class="location-info">
-            <p>${data.address || ''}</p>
+          <p class="box-name">${data.name || 'Book Box'}</p>
+          <div class="box-location">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>${data.address || 'Location'}</span>
           </div>
         </div>
       </div>
     `;
+        // Make clickable to go to book box detail
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', () => {
+            window.location.href = `bookBoxDetail.html?id=${data.libraryId}`;
+        });
         addedBoxInfo.appendChild(div);
     });
 }
@@ -260,38 +274,108 @@ async function main(userId) {
     const user = await fetchUsers(userId);
     showUserInfo(user);
 
-    const contribution = await countUserContribution(userId);
+    const userDisplayName = user?.displayName || currentUser?.displayName || '';
+    const contribution = await countUserContribution(userId, userDisplayName);
     showAddedBoxes(contribution.addedBoxes);
 
     await showFavoriteBoxes(userId);
 }
 
+// Store current user globally
+let currentUser = null;
+
 // auth state
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        console.log('logged in user: ', user.uid);
+onAuthStateChanged(auth, async (user) =>{
+if(user) {
+    currentUser = user;
+    await main(user.uid);
+} else {
+    window.location.href = "../pages/login.html";
+}
 
-        // PATCH: ensure navbar gets an avatar immediately on sign-in
-        const initialAvatar = resolveAvatarUrl(user);
-        localStorage.setItem('sr:avatar', initialAvatar);
-        window.dispatchEvent(new CustomEvent('avatar:changed', { detail: { url: initialAvatar } }));
-
-        await main(user.uid);
-    } else {
-        console.log('User not logged in redirecting...');
-        window.location.href = '../pages/login.html';
-    }
 });
 
 // logout
-if (logOut) {
-    logOut.addEventListener('click', async () => {
+if(logOut){
+    logOut.addEventListener("click", async() => {
         try {
             await signOut(auth);
-            console.log('Sign out');
-            window.location.href = '../pages/login.html';
+            console.log("Sing out");
+            window.location.href = "../pages/login.html";
         } catch (e) {
-            console.log('Sign out error: ', e);
+            console.error("Logout error: ", e);
         }
     });
 }
+
+// modal window
+
+editIcon.addEventListener("click", async() => {
+    editModal.classList.add("show");
+
+    if(!currentUser)
+        return;
+
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if(userSnap.exists()){
+        const data = userSnap.data();
+
+        modalPhoto.src = data.photoURL || "/images/me.jpg";
+        editName.value = data.displayName || "";
+        editEmail.value = data.email || "";
+        editLocation.value = data.locationName || "";
+        editPassword.value = data.password;
+    }
+})
+
+closeIcon.addEventListener("click", () => {
+    editModal.classList.remove("show");
+})
+
+window.addEventListener("click", (e) => {
+    if(e.target === editModal) {
+     editModal.classList.remove("show");
+    }
+})
+
+saveBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    if(!currentUser) {
+        alert("Please log in to edit your profile.")
+        return;
+    }
+
+    const userRef = doc(db, "users", currentUser.uid);
+
+    const newName = editName.value.trim();
+    const newEmail = editEmail.value.trim();
+    const newLocation = editLocation.value.trim();
+    const newPassword = editPassword.value.trim();
+
+    try {
+        await updateDoc(userRef, {
+                displayName: newName || null,
+                email: newEmail || null,
+                locationName: newLocation || null,
+                password: newPassword || null,
+            }
+        );
+        alert(" Profile updated successfully");
+        editModal.classList.remove("show");
+
+    } catch {
+        console.error("Error", error);
+        alert("Failed to update.");
+    }
+
+
+        displayNameEls.forEach(el => el.textContent = newName);
+        // use loop only for display name
+        emailEl.textContent = newEmail;
+        currentLocation.textContent = newLocation;
+        passwordEl.textContent = newPassword.replace(/./g, "*") ;
+    
+});
