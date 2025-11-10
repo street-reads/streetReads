@@ -2,6 +2,8 @@
 import {
     getFirestore,
     getDocs,
+    query,
+    where,
     collection,
     doc,
     addDoc,
@@ -28,6 +30,8 @@ document.addEventListener('profile', () => {
 // map + marker registry
 let appMap = null;
 const markersById = new Map();
+// in-memory cache: libraryId -> count
+let favCounts = new Map();
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -40,13 +44,17 @@ const apiKey = 'CL5Ni3mQjMRBsIchbKD6ousDrxTwSSQI';
 
 // Initialize Firebase Auth and update UI when user signs in/out
 const auth = getAuth(app);
+// track the current signed-in user's uid so we can set createdBy on new docs
+let currentUserId = null;
 onAuthStateChanged(auth, (user) => {
     const displayNameEls = document.querySelectorAll('#display-name');
     if (!displayNameEls || !displayNameEls.length) return;
     if (user) {
+        currentUserId = user.uid || null;
         const name = user.displayName || user.email || 'No name';
         displayNameEls.forEach((el) => (el.textContent = name));
     } else {
+        currentUserId = null;
         displayNameEls.forEach((el) => (el.textContent = 'Not signed in'));
     }
 });
@@ -130,8 +138,8 @@ function buildPopupEl(item) {
     const addrDiv = document.createElement('div');
     addrDiv.className = 'addr';
     const addrIcon = document.createElement('span');
-    addrIcon.className = 'icon';
-    addrIcon.textContent = '📍';
+    // addrIcon.className = 'icon';
+    // addrIcon.textContent = '📍';
     const addrText = document.createElement('span');
     addrText.textContent = item.address || '';
     addrDiv.appendChild(addrIcon);
@@ -142,15 +150,71 @@ function buildPopupEl(item) {
     meta.className = 'meta';
     const star = document.createElement('span');
     star.className = 'icon';
-    star.textContent = '⭐';
-    const rating = document.createElement('span');
-    rating.textContent = ratingText;
+    // Create a solid (filled) Font Awesome heart and color it
+    // NOTE: ensure Font Awesome CSS is loaded in your HTML for this to render
+    const heart = document.createElement('i');
+    heart.className = 'fa-solid fa-heart';
+    heart.setAttribute('aria-hidden', 'true');
+    heart.style.color = 'rgb(71, 71, 208)';
+    star.appendChild(heart);
+    // Favorite count placeholder (filled from cache first, then updated async)
+    const favCount = document.createElement('span');
+    favCount.className = 'fav-count';
+    // show cached value if available to avoid network round-trip
+    const cached = favCounts.get(item.id);
+    favCount.textContent = typeof cached === 'number' ? String(cached) : '0';
+    // Optional: aria label for accessibility
+    favCount.setAttribute('aria-label', 'Favorite count');
+
+    // Append icon and count to meta
     meta.appendChild(star);
-    meta.appendChild(rating);
+    meta.appendChild(favCount);
     el.appendChild(meta);
 
     return el;
 }
+
+// Fetch favorite count for a given libraryId and update the provided element
+async function fetchFavoriteCount(libraryId, el) {
+    if (!libraryId || !el) return;
+    try {
+        // In this project users store their favorites as an array field `favorites` inside each user doc.
+        // Count users whose `favorites` array contains this libraryId using `array-contains`.
+        const usersCol = collection(db, 'users');
+        const q = query(usersCol, where('favorites', 'array-contains', libraryId));
+        const snap = await getDocs(q);
+        const count = snap.size ?? (Array.isArray(snap.docs) ? snap.docs.length : 0);
+        el.textContent = String(count);
+    } catch (err) {
+        console.error('fetchFavoriteCount error', err);
+        el.textContent = '0';
+    }
+}
+
+// Build a one-time cache of favorite counts by scanning all user docs' favorites arrays.
+// This is simpler and cheaper than running an array-contains query for every popup when
+// you have a modest number of users. If your users collection is very large, consider
+// server-side aggregation (Cloud Function) instead.
+async function buildFavoriteCounts() {
+    try {
+        const usersCol = collection(db, 'users');
+        const snap = await getDocs(usersCol);
+        const map = new Map();
+        snap.docs.forEach((d) => {
+            const favs = d.data()?.favorites;
+            if (!Array.isArray(favs)) return;
+            favs.forEach((libId) => {
+                if (!libId) return;
+                map.set(libId, (map.get(libId) || 0) + 1);
+            });
+        });
+        favCounts = map;
+        console.debug('buildFavoriteCounts: done', favCounts);
+    } catch (e) {
+        console.warn('buildFavoriteCounts failed', e);
+    }
+}
+
 
 /* Add/Update/Remove markers from Firestore docs */
 function addOrUpdateMarkerFromDoc(map, docSnap) {
@@ -177,6 +241,14 @@ function addOrUpdateMarkerFromDoc(map, docSnap) {
         const el = document.createElement('div');
         el.className = 'marker-bookbox';
         const popup = new tt.Popup({ offset: 30 }).setDOMContent(buildPopupEl(item));
+        // After popup DOM is created, find the fav-count element inside and populate it
+        try {
+            const popupEl = popup.getDOMContent();
+            const favEl = popupEl.querySelector('.fav-count');
+            if (item.id && favEl) fetchFavoriteCount(item.id, favEl);
+        } catch (e) {
+            // non-critical
+        }
         // anchor bottom so the pin points to the coordinate and the SDK can handle placement
         const marker = new tt.Marker({ element: el, anchor: 'bottom' }).setLngLat(coords).setPopup(popup).addTo(map);
         markersById.set(id, { marker, popup });
@@ -387,7 +459,8 @@ async function createLibrary({ name, address, coords, photoURLs = [] }) {
         name: name ?? null,
         address: address ?? null,
         libraryId: null,
-        createdBy: null,
+        // attach the currently signed-in user's uid when available
+        createdBy: currentUserId ?? (auth?.currentUser?.uid ?? null),
         location: new GeoPoint(lat, lng),
         photoURL: Array.isArray(photoURLs) ? photoURLs : [],
         comments: [],
@@ -402,7 +475,7 @@ async function createLibrary({ name, address, coords, photoURLs = [] }) {
     return docRef.id;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('Initializing map...');
 
     const mapContainer = document.getElementById('map');
@@ -426,11 +499,14 @@ document.addEventListener('DOMContentLoaded', function () {
         map.addControl(new tt.NavigationControl());
         map.addControl(new tt.FullscreenControl());
 
-        appMap = map;
+    appMap = map;
 
-        addBookboxMarkers(map, BOOKBOXES);
-        showUserLocation(map, { zoom: 12, follow: false });
-        startLibraryMarkersLive(map);
+    // build favorite counts cache before rendering markers/popups
+    await buildFavoriteCounts();
+
+    addBookboxMarkers(map, BOOKBOXES);
+    showUserLocation(map, { zoom: 12, follow: false });
+    startLibraryMarkersLive(map);
 
         console.log('Map initialized successfully!');
     } catch (error) {
@@ -877,7 +953,7 @@ async function searchBookboxByAddress() {
 // Recently updated//
 
 /*
- Show only BookBoxes created or updated within the last `days` days.
+ Show only BookBoxes created or updated within the last `1days` days.
  */
 async function showRecentlyUpdated(map = appMap, days = 1) {
     if (!map) {
@@ -930,12 +1006,36 @@ async function showRecentlyUpdated(map = appMap, days = 1) {
     if (!btn) return;
     btn.addEventListener('click', (e) => {
         // if the checkbox exists, respect it; otherwise default to running
-        const recentCb = document.getElementById('recently-updated');
-        const nearbyCb = document.getElementById('nearby');
+    const recentCb = document.getElementById('recently-updated');
+    const nearbyCb = document.getElementById('nearby');
+    const mostPopularCb = document.getElementById('most-popular');
         // Nearby takes precedence if checked
         if (nearbyCb && nearbyCb.checked) {
             nearbyMe(appMap, 1000);
             // close filter UI
+            const ff = document.getElementById('filterFeild');
+            if (ff) ff.style.display = 'none';
+            return;
+        }
+        // Most Popular takes next precedence
+        if (mostPopularCb && mostPopularCb.checked) {
+            mostPopular(appMap);
+            const ff = document.getElementById('filterFeild');
+            if (ff) ff.style.display = 'none';
+            return;
+        }
+        // Most Liked
+        const mostLikedCb = document.getElementById('most-liked');
+        if (mostLikedCb && mostLikedCb.checked) {
+            mostLiked(appMap);
+            const ff = document.getElementById('filterFeild');
+            if (ff) ff.style.display = 'none';
+            return;
+        }
+        // Most commented
+        const mostcommentedCb = document.getElementById('most-commented');
+        if (mostcommentedCb && mostcommentedCb.checked) {
+            mostCommented(appMap);
             const ff = document.getElementById('filterFeild');
             if (ff) ff.style.display = 'none';
             return;
@@ -1045,4 +1145,150 @@ async function nearbyMe(map = appMap, meters = 1000) {
 
 //Most Popular
 
+async function mostPopular(map = appMap) {
+    if (!map) {
+        console.warn('Most popular bookbox: map not available');
+        return;
+    }
 
+    try {
+        const colRef = collection(db, 'streetLibraries');
+        const snap = await getDocs(colRef);
+        // Find the maximum averageRating and keep the doc(s) that match it (handle ties)
+        let maxRating = -Infinity;
+        const bestIds = new Set();
+
+        snap.docs.forEach((d) => {
+            const data = d.data() || {};
+            const avg = typeof data.averageRating === 'number' ? data.averageRating : Number(data.averageRating);
+            if (!Number.isFinite(avg)) return;
+            if (avg > maxRating) {
+                maxRating = avg;
+                bestIds.clear();
+                bestIds.add(d.id);
+            } else if (avg === maxRating) {
+                bestIds.add(d.id);
+            }
+        });
+
+        if (bestIds.size === 0) {
+            alert('No rated BookBoxes found. Try adding ratings first.');
+            return;
+        }
+
+        // Remove markers that are not among the most popular
+        for (const id of Array.from(markersById.keys())) {
+            if (!bestIds.has(id)) removeMarkerById(id);
+        }
+
+        // Add/update markers for the top-rated docs
+        for (const doc of snap.docs) {
+            if (bestIds.has(doc.id)) addOrUpdateMarkerFromDoc(map, doc);
+        }
+    } catch (err) {
+        console.error('mostPopular error', err);
+        alert('Failed to compute most popular BookBoxes. See console.');
+    }
+}
+
+
+//Most Liked
+async function mostLiked(map = appMap) {
+    if (!map) {
+        console.warn('Most Liked bookbox: map not available');
+        return;
+    }
+    try {
+        // Ensure we have a favorites cache; build it if empty
+        if (!favCounts || favCounts.size === 0) {
+            await buildFavoriteCounts();
+        }
+
+        const colRef = collection(db, 'streetLibraries');
+        const snap = await getDocs(colRef);
+
+        // Determine the max favorite count among all libraries (treat missing as 0)
+        let maxCount = -Infinity;
+        const bestIds = new Set();
+
+        snap.docs.forEach((d) => {
+            const id = d.id;
+            const count = Number(favCounts.get(id) || 0);
+            if (!Number.isFinite(count)) return;
+            if (count > maxCount) {
+                maxCount = count;
+                bestIds.clear();
+                bestIds.add(id);
+            } else if (count === maxCount) {
+                bestIds.add(id);
+            }
+        });
+
+        if (bestIds.size === 0 || maxCount <= 0) {
+            alert('No liked BookBoxes found yet. Encourage users to favorite some!');
+            return;
+        }
+
+        // Remove markers that are not among the most liked
+        for (const id of Array.from(markersById.keys())) {
+            if (!bestIds.has(id)) removeMarkerById(id);
+        }
+
+        // Add/update markers for the most-liked docs
+        for (const doc of snap.docs) {
+            if (bestIds.has(doc.id)) addOrUpdateMarkerFromDoc(map, doc);
+        }
+    } catch (err) {
+        console.error('mostLiked error', err);
+        alert('Failed to compute most-liked BookBoxes. See console.');
+    }
+}
+
+
+// Most commented
+
+async function mostCommented(map = appMap) {
+    if (!map) {
+        console.warn('Most commented bookbox: map not available');
+        return;
+    }
+
+    try {
+        const colRef = collection(db, 'streetLibraries');
+        const snap = await getDocs(colRef);
+        // Find the maximum number of comments and keep the doc(s) that match it (handle ties)
+        let maxComments = -Infinity;
+        const bestIds = new Set();
+
+        snap.docs.forEach((d) => {
+            const data = d.data() || {};
+            const comments = Array.isArray(data.comments) ? data.comments.length : 0;
+            const count = Number.isFinite(comments) ? comments : 0;
+            if (count > maxComments) {
+                maxComments = count;
+                bestIds.clear();
+                bestIds.add(d.id);
+            } else if (count === maxComments) {
+                bestIds.add(d.id);
+            }
+        });
+
+        if (bestIds.size === 0 || maxComments <= 0) {
+            alert('No comments found on any BookBoxes yet.');
+            return;
+        }
+
+        // Remove markers that are not among the most commented
+        for (const id of Array.from(markersById.keys())) {
+            if (!bestIds.has(id)) removeMarkerById(id);
+        }
+
+        // Add/update markers for the most-commented docs
+        for (const doc of snap.docs) {
+            if (bestIds.has(doc.id)) addOrUpdateMarkerFromDoc(map, doc);
+        }
+    } catch (err) {
+        console.error('mostCommented error', err);
+        alert('Failed to compute most commented BookBoxes. See console.');
+    }
+}
