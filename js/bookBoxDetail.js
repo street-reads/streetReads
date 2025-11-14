@@ -314,7 +314,7 @@ function loadBox() {
                   <div class="reviewContent">
                     <div class="reviewHeader">
                       <strong>${review.reviewerName || "Anonymous"}</strong>
-                      <span class="rating">⭐ ${review.rating || 0}</span>
+                      <span class="rating"><i class="fa-solid fa-star" style="color:#4747D0"></i> ${review.rating || 0}</span>
                     </div>
                     <p class="reviewText">${review.reviewText || ""}</p>
                   </div>

@@ -544,3 +544,64 @@ button {
     color: #666;
     transition: color 0.2s;
 }
+
+@media (max-width: 900px) {
+    main {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .left, .right {
+        padding: 0;
+    }
+    #boxName {
+        font-size: 24px;
+    }
+
+    p{
+        font-size: 15px;
+    }
+    .fav button {
+        font-size: 15px;
+    }
+
+    .btn {
+        width: 109px;
+        height: 40px;
+        font-size: 12px;
+        padding: 12px;
+    }
+
+    .rateStars {
+        width: 121px;
+        height: 40px;
+        padding: 3px;
+    }
+
+    #rateAvg i {
+        font-size: 20px;
+    }
+
+    .reviewContainer {
+        margin-top: 1rem;
+        padding: 1rem;
+    }
+
+    .review strong {
+        font-size: 15px;
+    }
+
+    .reviewContainer p {
+        font-size: 12px;
+    }
+
+    #chatContainer {
+        margin-top: 1rem;
+        padding: 1rem;
+    }
+
+    #chatInput {
+        width: 249px;
+        height: 44px;
+    }
+}

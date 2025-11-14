@@ -7,7 +7,9 @@
     border-radius: 20px;
     background-color: #f0f0f0; 
 }
-
+.mapboxgl-popup-content {
+    border-radius: 8px;
+}
 /* page styling */
 body {
     margin: 0;
@@ -63,6 +65,10 @@ h2 {
 }
 .search .fa-magnifying-glass {
     margin: 0 1rem;
+}
+
+.fa-magnifying-glass:hover {
+    transform: scale(1.3);
 }
 
 .search-field .search-text {

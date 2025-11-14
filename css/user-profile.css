@@ -174,7 +174,7 @@ body {
 .divider {
   height: 1px;
   background: var(--line);
-  margin: 16px 0
+  /* margin: 16px 0 */
 }
 
 .privacy .section-title {
@@ -598,4 +598,36 @@ body {
   padding: 12px;
   margin: 32px auto;
   cursor: pointer;
+}
+
+@media (max-width: 900px) {
+
+.profile-head {
+  justify-content: center;
+}
+.photo {
+  width: 79px;
+  height: 79px;
+}
+.photo-wrap {
+  margin: 0;
+}
+.privacy .section-title {
+  padding-left: 12px;
+  padding-bottom: 12px;
+}
+.privacy .row {
+  padding: 0px 16px 12px 16px;
+}
+
+.btn {
+  width: 76px;
+  height: 40px;
+  padding: 0;
+}
+
+.modalContent {
+  /* margin: 2rem; */
+  max-width: 400px;
+}
 }
