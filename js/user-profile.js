@@ -2,8 +2,8 @@
 
 // --- Firebase (v9 modular) ---
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
-import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+import { getAuth, onAuthStateChanged, signOut, deleteUser } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
 
 const firebaseConfig = {
     apiKey: 'AIzaSyDP88zVX_yPRwOKZl_xJxqjph2GFBNuk2o',
@@ -28,6 +28,7 @@ const displayNameEls = document.querySelectorAll('.display-name');
 const numberOfPost = document.querySelector('#number-of-post');
 const emailEl = document.querySelector('#email');
 const currentLocation = document.querySelector('#current-location');
+const trashIcon = document.querySelector("#trash-icon");
 const logOut = document.querySelector('#log-out-btn');
 
 const favoriteBoxInfo = document.querySelector('#favorite-box-info');
@@ -112,6 +113,84 @@ function showUserInfo(user) {
         }
     }
 }
+
+// update profile photo
+
+camera.addEventListener("click", async() => {
+    if(!currentUser){
+        alert("Please login");
+        return;
+    }
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.click();
+
+        input.onchange = async() => {
+            const file = input.files[0];
+            if(!file) return;
+
+        try {
+            const { cloudName, uploadPreset, apiUrl } = window.cloudinaryConfig;
+
+            const uploadUrl = `${apiUrl}/${cloudName}/image/upload`;
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", uploadPreset);
+
+            const res = await fetch(uploadUrl, {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if(!data.secure_url){
+                alert("Upload failed");
+                return;
+            }
+            const photoURL = data.secure_url;
+
+            //Store photoURL in firebase
+            const userRef = doc(db, "users", currentUser.uid);
+            await updateDoc(userRef, { photoURL });
+
+            modalPhoto.src = photoURL;
+            if(profilePhoto) profilePhoto.src = photoURL;
+
+            alert("Uploaded successfully");
+        } catch(error) {
+            console.error("Upload error: ", error);
+            alert("Error");
+        }
+    };
+});
+
+// delete user account
+
+trashIcon.addEventListener("click", async() => {
+
+    if(!currentUser)
+        return;
+
+    const deletingUser = confirm("Are you sure you want to delete your account?");
+    if(!deletingUser)
+        return;
+
+    try {
+        const userRef = doc(db, "users", currentUser.uid);
+        await deleteDoc(userRef);
+        await signOut(auth);
+
+        alert("Your account has been deleted");
+        window.location.href = "../pages/login.html";
+    } catch(error) {
+        console.error("Deleting error", error);
+        alert("Failed to delete account");
+    }
+});
 
 // ---------- Count contributions ----------
 async function countUserContribution(userId, userDisplayName) {
@@ -322,7 +401,7 @@ editIcon.addEventListener("click", async() => {
     if(userSnap.exists()){
         const data = userSnap.data();
 
-        modalPhoto.src = data.photoURL || "/images/me.jpg";
+        modalPhoto.src = data.photoURL || "";
         editName.value = data.displayName || "";
         editEmail.value = data.email || "";
         editLocation.value = data.locationName || "";
