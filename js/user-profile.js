@@ -160,6 +160,12 @@ camera.addEventListener("click", async() => {
             modalPhoto.src = photoURL;
             if(profilePhoto) profilePhoto.src = photoURL;
 
+            // Update navbar avatar
+            const navbar = document.querySelector('app-navbar');
+            if (navbar && navbar.updateAvatar) {
+                navbar.updateAvatar(photoURL);
+            }
+
             alert("Uploaded successfully");
         } catch(error) {
             console.error("Upload error: ", error);

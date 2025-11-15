@@ -41,6 +41,18 @@
             });
         }
 
+        // Public method to update the avatar
+        updateAvatar(avatarUrl) {
+            if (avatarUrl) {
+                this.setAttribute('avatar', avatarUrl);
+                // Also update the background directly in case render hasn't run yet
+                const avatarEl = this.shadowRoot?.querySelector('.avatar');
+                if (avatarEl) {
+                    avatarEl.style.backgroundImage = `url('${avatarUrl}')`;
+                }
+            }
+        }
+
         render() {
             const { brand, avatar } = this.state;
 
