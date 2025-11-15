@@ -26,6 +26,12 @@ async function updateNavbarAvatar() {
     const navbar = document.querySelector('app-navbar');
     if (!navbar) {
         // Navbar might not be loaded yet, try again after a short delay
+        setTimeout(updateNavbarAvatar, 200);
+        return;
+    }
+    
+    // Wait a bit more to ensure navbar shadow DOM is ready
+    if (!navbar.shadowRoot || !navbar.shadowRoot.querySelector('.avatar')) {
         setTimeout(updateNavbarAvatar, 100);
         return;
     }
@@ -46,14 +52,21 @@ async function updateNavbarAvatar() {
             const userData = userSnap.data();
             const photoURL = userData.photoURL;
             
-            if (photoURL) {
+            // Only update if photoURL exists and is not empty
+            // Check if it's a valid URL (starts with http:// or https://)
+            if (photoURL && 
+                photoURL.trim() !== '' && 
+                (photoURL.startsWith('http://') || photoURL.startsWith('https://'))) {
+                console.log('Updating navbar avatar with:', photoURL);
                 navbar.updateAvatar(photoURL);
             } else {
-                // User exists but no photoURL, use default
+                // User exists but no valid photoURL, use default
+                console.log('No valid photoURL found, using default avatar. photoURL:', photoURL);
                 navbar.updateAvatar(DEFAULT_AVATAR);
             }
         } else {
             // User doc doesn't exist, use default
+            console.log('User document not found, using default avatar');
             navbar.updateAvatar(DEFAULT_AVATAR);
         }
     } catch (error) {
@@ -70,9 +83,26 @@ onAuthStateChanged(auth, (user) => {
 
 // Also try to update when DOM is ready (in case user is already logged in)
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateNavbarAvatar);
+    document.addEventListener('DOMContentLoaded', () => {
+        // Wait a bit for custom elements to be defined
+        setTimeout(updateNavbarAvatar, 300);
+    });
 } else {
-    // DOM is already ready
-    updateNavbarAvatar();
+    // DOM is already ready, wait a bit for custom elements
+    setTimeout(updateNavbarAvatar, 300);
 }
+
+// Also listen for when the navbar element is actually connected
+const observer = new MutationObserver((mutations) => {
+    const navbar = document.querySelector('app-navbar');
+    if (navbar && navbar.shadowRoot) {
+        updateNavbarAvatar();
+        observer.disconnect();
+    }
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
 

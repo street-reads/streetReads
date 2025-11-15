@@ -14,12 +14,16 @@
             this.attachShadow({ mode: 'open' });
             this.state = {
                 brand: this.getAttribute('brand') || 'Street Reads',
-                avatar: this.getAttribute('avatar') || '',
+                avatar: this.getAttribute('avatar') || '../src/avatar.png',
             };
         }
 
         attributeChangedCallback(name, _old, value) {
-            this.state[name] = value ?? '';
+            if (name === 'avatar') {
+                this.state[name] = value && value.trim() !== '' ? value : '../src/avatar.png';
+            } else {
+                this.state[name] = value ?? '';
+            }
             this.render();
         }
 
@@ -45,10 +49,24 @@
         updateAvatar(avatarUrl) {
             if (avatarUrl) {
                 this.setAttribute('avatar', avatarUrl);
-                // Also update the background directly in case render hasn't run yet
+                // Also update the background directly
                 const avatarEl = this.shadowRoot?.querySelector('.avatar');
                 if (avatarEl) {
                     avatarEl.style.backgroundImage = `url('${avatarUrl}')`;
+                    avatarEl.style.backgroundSize = 'cover';
+                    avatarEl.style.backgroundPosition = 'center';
+                    avatarEl.style.backgroundRepeat = 'no-repeat';
+                }
+            } else {
+                // If no avatar URL, use default
+                const defaultAvatar = '../src/avatar.png';
+                this.setAttribute('avatar', defaultAvatar);
+                const avatarEl = this.shadowRoot?.querySelector('.avatar');
+                if (avatarEl) {
+                    avatarEl.style.backgroundImage = `url('${defaultAvatar}')`;
+                    avatarEl.style.backgroundSize = 'cover';
+                    avatarEl.style.backgroundPosition = 'center';
+                    avatarEl.style.backgroundRepeat = 'no-repeat';
                 }
             }
         }
@@ -109,7 +127,7 @@
             width: 34px;
             height: 34px;
             border-radius: 50%;
-            background: url('${avatar}') center/cover no-repeat;
+            background: ${avatar ? `url('${avatar}')` : 'url("../src/avatar.png")'} center/cover no-repeat;
             border: 2px solid rgba(255, 255, 255, .65);
             cursor: pointer;
             transition: transform 0.2s ease;
