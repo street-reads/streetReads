@@ -216,7 +216,7 @@ function loadBox() {
 
   // Try to get document directly by ID first (faster)
   const boxDocRef = doc(db, "streetLibraries", boxId);
-  
+
   return getDoc(boxDocRef)
     .then((docSnap) => {
       let foundBox = null;
@@ -250,7 +250,7 @@ function loadBox() {
 
       boxName.textContent = foundBox.name || 'Unnamed BookBox';
       boxAddress.textContent = foundBox.address || 'Address not available';
-      
+
       //既存の loadBox 内でボックスを見つけた後に↓を追加
       currentBoxRef = doc(db, "streetLibraries", foundBox.id);
       currentBox = currentBoxRef; // Set for review submission
@@ -295,6 +295,38 @@ function loadBox() {
           imgContainer.appendChild(noImagesMsg);
         }
       }
+
+      function enableMobilePopup() {
+        const isMobile = window.innerWidth <= 768;
+        const popup = document.getElementById("imagePopup");
+        const popupImg = document.getElementById("popupImg");
+        const closeBtn = document.querySelector("#imagePopup .close");
+        const images = document.querySelectorAll("#boxImages img");
+
+        if (!popup || !popupImg || !closeBtn || images.length === 0) return;
+
+        images.forEach(img => img.onclick = null);
+
+        if (!isMobile) {
+          popup.style.display = "none"; 
+          return;
+        }
+
+        images.forEach(img => {
+          img.onclick = () => {
+            popupImg.src = img.src;
+            popup.style.display = "flex";
+          };
+        });
+
+        closeBtn.onclick = () => {
+          popup.style.display = "none";
+        };
+      }
+
+      window.addEventListener("load", enableMobilePopup);
+      window.addEventListener("resize", enableMobilePopup);
+
 
       //review
       if (reviewsContainer) {
@@ -412,7 +444,7 @@ function displayAvgRating(reviews) {
   starsHTML += '</div>';
 
   const reviewCount = reviews.length;
-rateBox.innerHTML = `
+  rateBox.innerHTML = `
   <div class="starsAvg">${starsHTML}</div>
   <div class="rating-info">
     <span class="avg">${avg}</span>
@@ -454,19 +486,21 @@ form.addEventListener("submit", (event) => {
     reviewerName: name,
     reviewText: text,
     rating: Number(selectedStar),
-    createdAt: new Date()
+    createdAt: new Date(),
+    userId: currentUser.uid,
   };
 
   updateDoc(currentBox, {
     reviews: arrayUnion(newReview)
   })
-    .then(async() => {
+    .then(async () => {
       await updateAverageRating(currentBox);
       alert("Your review was submitted successfully!");
       form.reset();
       selectedStar = 0;
       stars.forEach((star) => star.classList.remove("active"));
       loadBox();
+      closeModal();
     })
     .catch((error) => {
       console.error("Error adding review:", error);
@@ -690,11 +724,11 @@ async function renderMessages(comments) {
   for (const msg of comments) {
     const when = msg.createdAt?.toDate
       ? msg.createdAt.toDate().toLocaleString([], {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
       : "";
 
     const userAvatar = msg.avatarURL || "https://i.pravatar.cc/50";
