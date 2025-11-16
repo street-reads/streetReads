@@ -332,9 +332,13 @@ function loadBox() {
       if (reviewsContainer) {
         reviewsContainer.innerHTML = "";
         if (reviews && reviews.length > 0) {
-          reviews.forEach((review) => {
+          // Use async function to fetch avatars for reviews
+          const renderReview = async (review) => {
             const div = document.createElement("div");
             div.className = "review";
+
+            // Fetch actual profile picture from Firestore
+            const reviewAvatar = review.userId ? await getUserAvatar(review.userId) : "../src/avatar.png";
 
             const reviewHeader = document.createElement("div");
             reviewHeader.className = "reviewHeader";
@@ -342,7 +346,7 @@ function loadBox() {
             // reviewText.textContent = review.reviewText;
             reviewHeader.innerHTML = `
               <div class="reviewItem">
-                  <img src="${review.avatarURL || 'https://i.pravatar.cc/50'}" alt="avatar" class="avatar">
+                  <img src="${reviewAvatar}" alt="avatar" class="avatar">
                   <div class="reviewContent">
                     <div class="reviewHeader">
                       <strong>${review.reviewerName || "Anonymous"}</strong>
@@ -354,6 +358,11 @@ function loadBox() {
 
             div.append(reviewHeader, reviewText);
             reviewsContainer.appendChild(div);
+          };
+
+          // Render all reviews asynchronously
+          Promise.all(reviews.map(review => renderReview(review))).catch(err => {
+            console.error("Error rendering reviews:", err);
           });
         }
       }
@@ -475,14 +484,31 @@ async function updateAverageRating(boxRef) {
 }
 
 //レビュー送信
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const name = reviewerName.value;
   const text = reviewText.value;
 
+  // Fetch latest profile picture from Firestore
+  let avatarURL = currentUser?.photoURL || "https://i.pravatar.cc/60";
+  if (currentUser) {
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.photoURL) {
+          avatarURL = userData.photoURL;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching user photo:', err);
+    }
+  }
+
   const newReview = {
-    avatarURL: currentUser?.photoURL || "https://i.pravatar.cc/60",
+    avatarURL: avatarURL,
     reviewerName: name,
     reviewText: text,
     rating: Number(selectedStar),
@@ -495,6 +521,24 @@ form.addEventListener("submit", (event) => {
   })
     .then(async () => {
       await updateAverageRating(currentBox);
+      
+      // Update navbar avatar with latest profile picture
+      const navbar = document.querySelector('app-navbar');
+      if (navbar && navbar.updateAvatar && currentUser) {
+        try {
+          const userRef = doc(db, 'users', currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.photoURL) {
+              navbar.updateAvatar(userData.photoURL);
+            }
+          }
+        } catch (err) {
+          console.error('Error updating navbar avatar:', err);
+        }
+      }
+      
       alert("Your review was submitted successfully!");
       form.reset();
       selectedStar = 0;
@@ -694,8 +738,9 @@ let currentBoxRef = null;
 
 
 //send msg
-//cash
+//cache
 const userCache = {};
+const avatarCache = {};
 
 // UID から displayName を取得
 async function getUserName(uid) {
@@ -717,6 +762,37 @@ async function getUserName(uid) {
   }
 }
 
+// Fetch user's actual profile picture from Firestore
+async function getUserAvatar(uid) {
+  if (!uid) return "../src/avatar.png";
+  if (avatarCache[uid]) return avatarCache[uid];
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const photoURL = userData.photoURL;
+      
+      // Only use valid photoURLs (not placeholder/random images)
+      if (photoURL && 
+          photoURL.trim() !== '' && 
+          (photoURL.startsWith('http://') || photoURL.startsWith('https://')) &&
+          !photoURL.includes('pravatar.cc') &&
+          !photoURL.includes('i.pravatar.cc')) {
+        avatarCache[uid] = photoURL;
+        return photoURL;
+      }
+    }
+    // Return default avatar if no valid photoURL
+    avatarCache[uid] = "../src/avatar.png";
+    return "../src/avatar.png";
+  } catch (err) {
+    console.error("Error fetching user avatar:", err);
+    avatarCache[uid] = "../src/avatar.png";
+    return "../src/avatar.png";
+  }
+}
+
 //display msg
 async function renderMessages(comments) {
   messages.innerHTML = "";
@@ -731,7 +807,8 @@ async function renderMessages(comments) {
       })
       : "";
 
-    const userAvatar = msg.avatarURL || "https://i.pravatar.cc/50";
+    // Fetch actual profile picture from Firestore instead of using stored avatarURL
+    const userAvatar = await getUserAvatar(msg.userId);
     // Support both commentImg and imageUrl field names
     const imageUrl = msg.commentImg || msg.imageUrl || null;
     const imageSection = imageUrl
@@ -794,6 +871,21 @@ sendBtn.addEventListener("click", async () => {
   }
 
   try {
+    // Fetch latest profile picture from Firestore
+    let avatarURL = user.photoURL || "https://i.pravatar.cc/60";
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.photoURL) {
+          avatarURL = userData.photoURL;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching user photo:', err);
+    }
+
     let imageUrl = null;
     
     // Upload image if attached
@@ -819,12 +911,29 @@ sendBtn.addEventListener("click", async () => {
       commentImg: imageUrl || null,
       createdAt: new Date(),
       userId: user.uid,
-      avatarURL: user.photoURL || "https://i.pravatar.cc/60",
+      avatarURL: avatarURL,
     };
 
     await updateDoc(currentBoxRef, {
       comments: arrayUnion(newComment),
     });
+
+    // Update navbar avatar with latest profile picture
+    const navbar = document.querySelector('app-navbar');
+    if (navbar && navbar.updateAvatar && user) {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (userData.photoURL) {
+            navbar.updateAvatar(userData.photoURL);
+          }
+        }
+      } catch (err) {
+        console.error('Error updating navbar avatar:', err);
+      }
+    }
 
     // Clear inputs
     chatInput.value = "";
@@ -870,6 +979,21 @@ if (attachBtn && attachInput) {
     }
 
     try {
+      // Fetch latest profile picture from Firestore
+      let avatarURL = user.photoURL || "https://i.pravatar.cc/60";
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (userData.photoURL) {
+            avatarURL = userData.photoURL;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching user photo:', err);
+      }
+
       // Show loading state
       sendBtn.disabled = true;
       sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
@@ -884,13 +1008,30 @@ if (attachBtn && attachInput) {
         commentImg: imageUrl,
         createdAt: new Date(),
         userId: user.uid,
-        avatarURL: user.photoURL || "https://i.pravatar.cc/60",
+        avatarURL: avatarURL,
       };
 
       // Save to Firestore
       await updateDoc(currentBoxRef, {
         comments: arrayUnion(imageComment),
       });
+
+      // Update navbar avatar with latest profile picture
+      const navbar = document.querySelector('app-navbar');
+      if (navbar && navbar.updateAvatar && user) {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.photoURL) {
+              navbar.updateAvatar(userData.photoURL);
+            }
+          }
+        } catch (err) {
+          console.error('Error updating navbar avatar:', err);
+        }
+      }
 
       console.log("Image sent:", imageUrl);
       
