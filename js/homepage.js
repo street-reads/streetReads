@@ -541,7 +541,18 @@ function filterPopup() {
     const updateFilter = document.getElementById('updateFilter');
 
     if (filterBtn) filterBtn.addEventListener('click', () => (filterField.style.display = 'block'));
-    if (closeFilter) closeFilter.addEventListener('click', () => (filterField.style.display = 'none'));
+    // if (closeFilter) closeFilter.addEventListener('click', () => (filterField.style.display = 'none'));
+
+    document.addEventListener('click', (e) => {
+        if (!filterField) return;
+        const isVisible = filterField.style.display && filterField.style.display !== 'none';
+        if (!isVisible) return;
+         // クリック先がフィルタ内でもフィルタ開閉ボタン内でもなければ閉じる
+         if (!filterField.contains(e.target) && !(filterBtn && filterBtn.contains(e.target))) {
+            filterField.style.display = 'none';
+        }
+    });
+
 
     if (selectAll) {
         selectAll.addEventListener('click', () => {
@@ -969,7 +980,7 @@ async function searchBookboxByAddress() {
 /*
  Show only BookBoxes created or updated within the last `1days` days.
  */
-async function showRecentlyUpdated(map = appMap, days = 1) {
+async function showRecentlyUpdated(map = appMap, days = 7) {
     if (!map) {
         console.warn('showRecentlyUpdated: map not available');
         return;
