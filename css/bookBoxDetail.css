@@ -5,6 +5,14 @@
     padding: 0;
     box-sizing: border-box;
 }
+html, body {
+    height: 100%;
+}
+
+main {
+    min-height: calc(100vh - 80px);
+
+}
 
 body {
     background: white;
@@ -67,7 +75,7 @@ main {
     /* 右側を左の半分くらいに */
     display: flex;
     flex-direction: column;
-    /* 内部要素を縦に並べる */
+    min-height: 0;
 }
 
 .left,
@@ -393,10 +401,11 @@ button {
     /* responsive cap; adjust if you prefer a fixed px value */
     overflow-y: auto;
     padding: 40px;
-    border: solid 1px black;
+    border: solid 2px lavender;
     border-radius: 10px;
     background: #f8fafc;
 
+    min-height: 0;
     scrollbar-color: #888 transparent;
 }
 
@@ -488,13 +497,18 @@ button {
        (which uses margin-top:auto) across widths while keeping the top
        visually in the same place. */
     flex: 1 1 auto;
+    height: 100%;
     min-height: 0;
+    max-height: 135vh;
     /* allow internal scrolling inside this flex child */
     overflow-y: auto;
 
     padding: 30px;
-    border: solid 1px black;
+    border: solid 2px lavender;
     border-radius: 10px;
+
+    /* min-height: 0; */
+    scrollbar-color: #888 transparent;
 }
 
 /* For very wide screens ensure both columns are exactly the same height so
@@ -531,8 +545,11 @@ button {
 }
 
 #messages {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1 1 auto;
+    overflow-y: scroll;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+
 }
 
 .userInfo {
@@ -637,7 +654,9 @@ button {
 
     .reviewContainer {
         margin-top: 1rem;
+        margin-bottom: 1rem;
         padding: 1rem;
+        max-height: 20vh;
     }
 
     .review strong {
@@ -651,6 +670,7 @@ button {
     #chatContainer {
         margin-top: 1rem;
         padding: 1rem;
+        max-height: 40vh;
     }
 
     #chatInput {
