@@ -167,10 +167,15 @@
           <input type="text" id="editLocation">
         </div>
         <h3>Privacy & Security</h3>
-        <div>
-          <label for="editPassword">Password</label>
-          <input type="text" id="editPassword">
-        </div>
+          <div class="password-row">
+            <label for="editPassword">Password</label>
+            <input id="editPassword" type="password" />
+            <button id="editPwdToggle" type="button" aria-pressed="false" aria-label="Show/Hide password">
+              <i id="editPwdEye" class="fa-solid fa-eye" aria-hidden="true"></i>
+              <i id="editPwdEyeOff" class="fa-solid fa-eye-slash" aria-hidden="true"></i>
+            </button>
+          </div>
+
         <button type="submit" class="saveBtn" id="saveBtn">Save</button>
       </form>
 

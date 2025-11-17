@@ -1,9 +1,27 @@
-// user-profile.js (patched)
+// user-profile.js (patched, Auth-aware, summary-eye opens modal & reveals input)
 
 // --- Firebase (v9 modular) ---
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
-import { getAuth, onAuthStateChanged, signOut, deleteUser } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut,
+    deleteUser,
+    updatePassword,
+    updateEmail,
+    updateProfile,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
+} from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+import {
+    getFirestore,
+    collection,
+    getDocs,
+    doc,
+    getDoc,
+    updateDoc,
+    deleteDoc,
+} from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
 
 const firebaseConfig = {
     apiKey: 'AIzaSyDP88zVX_yPRwOKZl_xJxqjph2GFBNuk2o',
@@ -13,10 +31,6 @@ const firebaseConfig = {
     messagingSenderId: '228045832951',
     appId: '1:228045832951:web:4b6d868e05a72ab08a89f2',
 };
-
-// document.addEventListener('profile', () => {
-//     window.location.reload(); // or just do nothing since already on profile page
-// });
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -28,7 +42,7 @@ const displayNameEls = document.querySelectorAll('.display-name');
 const numberOfPost = document.querySelector('#number-of-post');
 const emailEl = document.querySelector('#email');
 const currentLocation = document.querySelector('#current-location');
-const trashIcon = document.querySelector("#trash-icon");
+const trashIcon = document.querySelector('#trash-icon');
 const logOut = document.querySelector('#log-out-btn');
 
 const favoriteBoxInfo = document.querySelector('#favorite-box-info');
@@ -37,25 +51,56 @@ const addedBox = document.querySelector('#added-box');
 const reviewNumber = document.querySelector('#review-number');
 const addedBoxInfo = document.querySelector('#added-box-info');
 
-// Password + toggle
+// Password (profile section – display only)
 const passwordEl = document.querySelector('#password');
-const toggle = document.getElementById('toggle-eye'); // <button id="toggle-eye"> with two icons inside
+const toggle = document.getElementById('toggle-eye'); // button wrapping eye icons
 
-// modal window
-const editIcon = document.querySelector(".fa-pen");
-const editModal = document.querySelector("#editModal");
-const closeIcon = document.querySelector(".fa-xmark");
-const modalPhoto = document.querySelector("#modalPhoto");
-const camera = document.querySelector(".fa-camera");
-const editName = document.querySelector("#editName");
-const editEmail = document.querySelector("#editEmail");
-const editLocation = document.querySelector("#editLocation");
-const editPassword = document.querySelector("#editPassword");
-const saveBtn = document.querySelector("#saveBtn");
+// Modal refs
+const editIcon = document.querySelector('.fa-pen');
+const editModal = document.querySelector('#editModal');
+const closeIcon = document.querySelector('.fa-xmark');
+const modalPhoto = document.querySelector('#modalPhoto');
+const camera = document.querySelector('.fa-camera');
+const editName = document.querySelector('#editName');
+const editEmail = document.querySelector('#editEmail');
+const editLocation = document.querySelector('#editLocation');
+const editPassword = document.querySelector('#editPassword'); // NEW password (never prefilled)
+const saveBtn = document.querySelector('#saveBtn');
+
+// Optional password reveal in the EDIT MODAL
+const editPwdToggle = document.getElementById('editPwdToggle');
+const editPwdEye = document.getElementById('editPwdEye');
+const editPwdEyeOff = document.getElementById('editPwdEyeOff');
 
 // ---------- Helpers ----------
 function mask(str) {
     return '•'.repeat(Math.max(0, str?.length || 0));
+}
+
+/** Attach a show/hide toggle to a password input */
+function attachPasswordToggle(input, toggleBtn, eyeOn, eyeOff) {
+    if (!input || !toggleBtn) return;
+
+    const setState = (show) => {
+        input.type = show ? 'text' : 'password';
+        toggleBtn.setAttribute('aria-pressed', String(show));
+        if (eyeOn && eyeOff) {
+            eyeOn.style.display = show ? 'none' : 'inline';
+            eyeOff.style.display = show ? 'inline' : 'none';
+        }
+    };
+    setState(false);
+    toggleBtn.addEventListener('click', () => {
+        const show = toggleBtn.getAttribute('aria-pressed') !== 'true';
+        setState(show);
+    });
+}
+
+async function reauthIfNeeded(currentUser) {
+    const pw = window.prompt('Please enter your current password to confirm these changes:');
+    if (!pw) throw new Error('reauth-cancelled');
+    const cred = EmailAuthProvider.credential(currentUser.email, pw);
+    await reauthenticateWithCredential(currentUser, cred);
 }
 
 // ---------- Firestore: fetch user ----------
@@ -98,105 +143,113 @@ function showUserInfo(user) {
         currentLocation.textContent = user.locationName || 'No location';
     }
 
-    // Password + single toggle handler
+    // Password (NEVER show real password – always masked placeholder)
     if (passwordEl) {
-        const original = user.password || '';
-        passwordEl.textContent = mask(original);
-
+        passwordEl.textContent = '••••••••';
         if (toggle) {
-            // initialize icon state (not toggled = masked)
             toggle.classList.remove('toggled');
+            // Clicking the summary eye opens the modal and REVEALS the input
             toggle.onclick = () => {
-                const isOn = toggle.classList.toggle('toggled');
-                passwordEl.textContent = isOn ? original : mask(original);
+                if (editModal) editModal.classList.add('show');
+
+                // ensure the edit field starts revealed
+                if (editPassword) {
+                    editPassword.type = 'text';
+                    setTimeout(() => editPassword.focus(), 0);
+                }
+                if (editPwdToggle) {
+                    editPwdToggle.setAttribute('aria-pressed', 'true');
+                }
+                if (editPwdEye && editPwdEyeOff) {
+                    editPwdEye.style.display = 'none';
+                    editPwdEyeOff.style.display = 'inline';
+                }
             };
         }
     }
 }
 
-// update profile photo
+// ---------- Update profile photo ----------
+if (camera) {
+    camera.addEventListener('click', async () => {
+        if (!currentUser) {
+            alert('Please login');
+            return;
+        }
 
-camera.addEventListener("click", async() => {
-    if(!currentUser){
-        alert("Please login");
-        return;
-    }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.click();
 
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.click();
-
-        input.onchange = async() => {
+        input.onchange = async () => {
             const file = input.files[0];
-            if(!file) return;
+            if (!file) return;
+
+            try {
+                const { cloudName, uploadPreset, apiUrl } = window.cloudinaryConfig || {};
+                if (!cloudName || !uploadPreset || !apiUrl) {
+                    alert('Upload config missing.');
+                    return;
+                }
+
+                const uploadUrl = `${apiUrl}/${cloudName}/image/upload`;
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', uploadPreset);
+
+                const res = await fetch(uploadUrl, { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (!data.secure_url) {
+                    alert('Upload failed');
+                    return;
+                }
+                const photoURL = data.secure_url;
+
+                // Store photoURL in firestore
+                const userRef = doc(db, 'users', currentUser.uid);
+                await updateDoc(userRef, { photoURL });
+
+                if (modalPhoto) modalPhoto.src = photoURL;
+                if (profilePhoto) profilePhoto.src = photoURL;
+
+                // Notify navbar (if it exposes updateAvatar)
+                const navbar = document.querySelector('app-navbar');
+                if (navbar && typeof navbar.updateAvatar === 'function') {
+                    navbar.updateAvatar(photoURL);
+                }
+
+                alert('Uploaded successfully');
+            } catch (error) {
+                console.error('Upload error: ', error);
+                alert('Error');
+            }
+        };
+    });
+}
+
+// ---------- Delete user account ----------
+if (trashIcon) {
+    trashIcon.addEventListener('click', async () => {
+        if (!currentUser) return;
+
+        const deletingUser = confirm('Are you sure you want to delete your account?');
+        if (!deletingUser) return;
 
         try {
-            const { cloudName, uploadPreset, apiUrl } = window.cloudinaryConfig;
+            const userRef = doc(db, 'users', currentUser.uid);
+            await deleteDoc(userRef);
+            await signOut(auth);
 
-            const uploadUrl = `${apiUrl}/${cloudName}/image/upload`;
-
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("upload_preset", uploadPreset);
-
-            const res = await fetch(uploadUrl, {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await res.json();
-
-            if(!data.secure_url){
-                alert("Upload failed");
-                return;
-            }
-            const photoURL = data.secure_url;
-
-            //Store photoURL in firebase
-            const userRef = doc(db, "users", currentUser.uid);
-            await updateDoc(userRef, { photoURL });
-
-            modalPhoto.src = photoURL;
-            if(profilePhoto) profilePhoto.src = photoURL;
-
-            // Update navbar avatar
-            const navbar = document.querySelector('app-navbar');
-            if (navbar && navbar.updateAvatar) {
-                navbar.updateAvatar(photoURL);
-            }
-
-            alert("Uploaded successfully");
-        } catch(error) {
-            console.error("Upload error: ", error);
-            alert("Error");
+            alert('Your account has been deleted');
+            window.location.href = '../pages/login.html';
+        } catch (error) {
+            console.error('Deleting error', error);
+            alert('Failed to delete account');
         }
-    };
-});
-
-// delete user account
-
-trashIcon.addEventListener("click", async() => {
-
-    if(!currentUser)
-        return;
-
-    const deletingUser = confirm("Are you sure you want to delete your account?");
-    if(!deletingUser)
-        return;
-
-    try {
-        const userRef = doc(db, "users", currentUser.uid);
-        await deleteDoc(userRef);
-        await signOut(auth);
-
-        alert("Your account has been deleted");
-        window.location.href = "../pages/login.html";
-    } catch(error) {
-        console.error("Deleting error", error);
-        alert("Failed to delete account");
-    }
-});
+    });
+}
 
 // ---------- Count contributions ----------
 async function countUserContribution(userId, userDisplayName) {
@@ -215,10 +268,7 @@ async function countUserContribution(userId, userDisplayName) {
 
         if (data.createdBy === userId) {
             totalAddedBox++;
-            addedBoxes.push({
-                ...data,
-                libraryId: libraryId
-            });
+            addedBoxes.push({ ...data, libraryId });
         }
 
         if (Array.isArray(data.comments)) {
@@ -229,14 +279,11 @@ async function countUserContribution(userId, userDisplayName) {
 
         if (Array.isArray(data.reviews)) {
             data.reviews.forEach((r) => {
-                // Check if review belongs to user by userId or reviewerName matching user's displayName
-                const isUserReview = r?.userId === userId || 
-                                   (r?.reviewerName && userDisplayName && 
-                                    r.reviewerName.trim().toLowerCase() === userDisplayName.trim().toLowerCase());
-                
-                if (isUserReview) {
-                    totalReviews++;
-                }
+                const isUserReview =
+                    r?.userId === userId ||
+                    (r?.reviewerName && userDisplayName && r.reviewerName.trim().toLowerCase() === userDisplayName.trim().toLowerCase());
+
+                if (isUserReview) totalReviews++;
             });
         }
     });
@@ -259,29 +306,20 @@ async function getFavorites(userId) {
         const userData = userSnap.data();
         const favorites = Array.isArray(userData.favorites) ? userData.favorites : [];
 
-
         for (const libraryId of favorites) {
             if (!libraryId) continue;
-
             const libRef = doc(db, 'streetLibraries', libraryId);
             const libSnap = await getDoc(libRef);
-
             if (libSnap.exists()) {
                 const lib = libSnap.data();
-
                 out.push({
                     libraryId,
                     libraryName: lib.name || 'Unknown name',
-                    libraryAddress: lib.address  || 'No address',
-                
+                    libraryAddress: lib.address || 'No address',
                 });
-            } else {
             }
         }
-    } catch (e) {
-        // Error fetching favorites
-    }
-
+    } catch (_) {}
     return out;
 }
 
@@ -301,17 +339,17 @@ async function showFavoriteBoxes(userId) {
         div.innerHTML = `
       <div class="book-box-info">
         <img src="../src/0416f2714b3089cc44ed528f4660a254f40afa73.png" alt="Map preview" class="box-thumbnail">
-            <div class="box-detail">
-            <p class="box-name">${fav.libraryName}</p>
-                <div class="box-location">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <span>${fav.libraryAddress || 'Location'}</span>
-                </div>
-            </div>
+        <div class="box-detail">
+          <p class="box-name">${fav.libraryName}</p>
+          <div class="box-location">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>${fav.libraryAddress || 'Location'}</span>
+          </div>
+        </div>
       </div>
     `;
         div.addEventListener('click', () => {
-         window.location.href = `bookBoxDetail.html?id=${fav.libraryId}`;
+            window.location.href = `bookBoxDetail.html?id=${fav.libraryId}`;
         });
         favoriteBoxInfo.appendChild(div);
     });
@@ -335,7 +373,7 @@ function showAddedBoxes(addedBoxes) {
 
         div.innerHTML = `
       <div class="book-box-info">
-      ${mapThumbnail}
+        ${mapThumbnail}
         <div class="box-detail">
           <p class="box-name">${data.name || 'Book Box'}</p>
           <div class="box-location">
@@ -345,7 +383,6 @@ function showAddedBoxes(addedBoxes) {
         </div>
       </div>
     `;
-        // Make clickable to go to book box detail
         div.style.cursor = 'pointer';
         div.addEventListener('click', () => {
             window.location.href = `bookBoxDetail.html?id=${data.libraryId}`;
@@ -370,97 +407,134 @@ async function main(userId) {
 let currentUser = null;
 
 // auth state
-onAuthStateChanged(auth, async (user) =>{
-if(user) {
-    currentUser = user;
-    await main(user.uid);
-} else {
-    window.location.href = "../pages/login.html";
-}
-
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        await main(user.uid);
+    } else {
+        window.location.href = '../pages/login.html';
+    }
 });
 
 // logout
-if(logOut){
-    logOut.addEventListener("click", async() => {
+if (logOut) {
+    logOut.addEventListener('click', async () => {
         try {
             await signOut(auth);
-            console.log("Sing out");
-            window.location.href = "../pages/login.html";
+            window.location.href = '../pages/login.html';
         } catch (e) {
-            console.error("Logout error: ", e);
+            console.error('Logout error: ', e);
         }
     });
 }
 
-// modal window
+// ---------- Modal window ----------
+if (editIcon) {
+    editIcon.addEventListener('click', async () => {
+        if (!editModal) return;
+        editModal.classList.add('show');
 
-editIcon.addEventListener("click", async() => {
-    editModal.classList.add("show");
+        if (!currentUser) return;
 
-    if(!currentUser)
-        return;
+        const userRef = doc(db, 'users', currentUser.uid);
+        const userSnap = await getDoc(userRef);
 
-    const userRef = doc(db, "users", currentUser.uid);
-    const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            const data = userSnap.data();
 
-    if(userSnap.exists()){
-        const data = userSnap.data();
+            if (modalPhoto) modalPhoto.src = data.photoURL || '';
+            if (editName) editName.value = data.displayName || '';
+            if (editEmail) editEmail.value = data.email || '';
+            if (editLocation) editLocation.value = data.locationName || '';
+            if (editPassword) editPassword.value = ''; // NEVER prefill existing password
 
-        modalPhoto.src = data.photoURL || "";
-        editName.value = data.displayName || "";
-        editEmail.value = data.email || "";
-        editLocation.value = data.locationName || "";
-        editPassword.value = data.password;
-    }
-})
-
-closeIcon.addEventListener("click", () => {
-    editModal.classList.remove("show");
-})
-
-window.addEventListener("click", (e) => {
-    if(e.target === editModal) {
-     editModal.classList.remove("show");
-    }
-})
-
-saveBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    if(!currentUser) {
-        alert("Please log in to edit your profile.")
-        return;
-    }
-
-    const userRef = doc(db, "users", currentUser.uid);
-
-    const newName = editName.value.trim();
-    const newEmail = editEmail.value.trim();
-    const newLocation = editLocation.value.trim();
-    const newPassword = editPassword.value.trim();
-
-    try {
-        await updateDoc(userRef, {
-                displayName: newName || null,
-                email: newEmail || null,
-                locationName: newLocation || null,
-                password: newPassword || null,
+            // Reset modal password field to hidden & reset eye state
+            if (editPassword && editPwdToggle) {
+                editPassword.type = 'password';
+                editPwdToggle.setAttribute('aria-pressed', 'false');
+                if (editPwdEye && editPwdEyeOff) {
+                    editPwdEye.style.display = 'inline';
+                    editPwdEyeOff.style.display = 'none';
+                }
             }
-        );
-        alert(" Profile updated successfully");
-        editModal.classList.remove("show");
+        }
+    });
+}
 
-    } catch {
-        console.error("Error", error);
-        alert("Failed to update.");
-    }
+if (closeIcon && editModal) {
+    closeIcon.addEventListener('click', () => editModal.classList.remove('show'));
+    window.addEventListener('click', (e) => {
+        if (e.target === editModal) editModal.classList.remove('show');
+    });
+}
 
+// Attach the modal password eye behavior once
+attachPasswordToggle(editPassword, editPwdToggle, editPwdEye, editPwdEyeOff);
 
-        displayNameEls.forEach(el => el.textContent = newName);
-        // use loop only for display name
-        emailEl.textContent = newEmail;
-        currentLocation.textContent = newLocation;
-        passwordEl.textContent = newPassword.replace(/./g, "*") ;
-    
-});
+// ---------- Save (AUTH-FIRST, then Firestore mirror) ----------
+if (saveBtn) {
+    saveBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!currentUser) {
+            alert('Please log in to edit your profile.');
+            return;
+        }
+
+        const userRef = doc(db, 'users', currentUser.uid);
+
+        const newName = (editName?.value || '').trim();
+        const newEmail = (editEmail?.value || '').trim();
+        const newLocation = (editLocation?.value || '').trim();
+        const newPassword = (editPassword?.value || '').trim();
+
+        try {
+            const wantsEmailChange = newEmail && newEmail !== currentUser.email;
+            const wantsPasswordChange = !!newPassword;
+
+            // Reauth if changing sensitive data
+            if (wantsEmailChange || wantsPasswordChange) {
+                await reauthIfNeeded(currentUser);
+            }
+
+            // Update Auth
+            if (wantsEmailChange) {
+                await updateEmail(currentUser, newEmail);
+            }
+            if (wantsPasswordChange) {
+                await updatePassword(currentUser, newPassword);
+            }
+            if (newName && newName !== (currentUser.displayName || '')) {
+                await updateProfile(currentUser, { displayName: newName });
+            }
+
+            // Mirror safe fields to Firestore (NEVER store password)
+            const updates = {
+                displayName: newName || currentUser.displayName || null,
+                locationName: newLocation || null,
+                email: currentUser.email, // authoritative from Auth
+            };
+            await updateDoc(userRef, updates);
+
+            // UI updates
+            displayNameEls.forEach((el) => (el.textContent = updates.displayName || 'No name'));
+            if (emailEl) emailEl.textContent = updates.email || 'No email';
+            if (currentLocation) currentLocation.textContent = updates.locationName || 'No location';
+            if (passwordEl) passwordEl.textContent = '••••••••';
+            if (editPassword) editPassword.value = '';
+
+            alert('Profile updated successfully');
+            if (editModal) editModal.classList.remove('show');
+        } catch (error) {
+            console.error('Update failed:', error);
+            let msg = 'Failed to update.';
+            if (error.code === 'auth/requires-recent-login') {
+                msg = 'Please sign in again to confirm these changes.';
+            } else if (error.code === 'auth/weak-password') {
+                msg = 'Password is too weak. Use at least 6–8 strong characters.';
+            } else if (error.code === 'reauth-cancelled') {
+                msg = 'Update canceled — reauthentication required.';
+            }
+            alert(msg);
+        }
+    });
+}
