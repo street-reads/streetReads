@@ -170,7 +170,7 @@ const boxName = document.getElementById("boxName");
 const boxAddress = document.getElementById("boxAddress");
 const addBoxPicBtn = document.getElementById("addBoxPicBtn");
 const boxPicInput = document.getElementById("boxPicInput");
-const reviewsContainer = document.getElementById("reviews");
+const reviewsContainer = document.getElementById("reviewsContainer");
 const reviewerName = document.getElementById("reviewerName");
 const reviewText = document.getElementById("reviewText");
 const form = document.getElementById("form");
@@ -195,16 +195,16 @@ onAuthStateChanged(auth, (user) => {
 
 //stars
 const stars = document.querySelectorAll(".stars i");
-    stars.forEach((star, index1) => { 
-      star.addEventListener("click", () => { 
+stars.forEach((star, index1) => {
+  star.addEventListener("click", () => {
     selectedStar = index1 + 1;
-        stars.forEach((star, index2) => { 
+    stars.forEach((star, index2) => {
       index1 >= index2
         ? star.classList.add("active")
         : star.classList.remove("active");
-        }); 
-      }); 
     });
+  });
+});
 
 //Firestoreからデータを読み込み
 function loadBox() {
@@ -257,11 +257,17 @@ function loadBox() {
       initChatListener(currentBoxRef);
 
       const reviews = foundBox.reviews || [];
-      if (reviews.length === 0) {
-        if (reviewsContainer) {
-          reviewsContainer.innerHTML = `<p>No reviews yet, add the first one!</p>`;
-        }
-      } else {
+      if (reviews.length === 0 && reviewsContainer) {
+        const p = document.createElement("p");
+        p.textContent = "No reviews yet, add the first one!";
+        reviewsContainer.appendChild(p);
+      }
+
+
+      // console.log("reviewsContainer:", reviewsContainer);
+
+
+      else {
         displayAvgRating(reviews);
       }
 
@@ -287,12 +293,18 @@ function loadBox() {
           });
         } else {
           // No images available
-          const noImagesMsg = document.createElement("p");
-          noImagesMsg.textContent = "No images yet, add the first one!";
-          noImagesMsg.style.textAlign = "center";
-          noImagesMsg.style.padding = "2rem";
-          noImagesMsg.style.color = "#666";
+          // const noImagesMsg = document.createElement("p");
+          // noImagesMsg.textContent = "No images yet, add the first one!";
+          // noImagesMsg.style.textAlign = "center";
+          // noImagesMsg.style.padding = "2rem";
+          // noImagesMsg.style.color = "#666";
+          // imgContainer.appendChild(noImagesMsg);
+          const noImagesMsg = document.createElement("img");
+          noImagesMsg.src = "../images/placeholder_img.jpg";
+          noImagesMsg.alt = "No image available";
+          noImagesMsg.style.width = "200px"; // 必要なら
           imgContainer.appendChild(noImagesMsg);
+
         }
       }
 
@@ -308,7 +320,7 @@ function loadBox() {
         images.forEach(img => img.onclick = null);
 
         if (!isMobile) {
-          popup.style.display = "none"; 
+          popup.style.display = "none";
           return;
         }
 
@@ -382,7 +394,7 @@ addBoxPicBtn.addEventListener("click", () => boxPicInput.click());
 boxPicInput.addEventListener("change", async (e) => {
   const files = Array.from(e.target.files);
   if (!files.length || !currentUser) {
-    alert("ログインしてからアップロードしてください。");
+    alert("upload after you login");
     return;
   }
 
@@ -521,7 +533,7 @@ form.addEventListener("submit", async (event) => {
   })
     .then(async () => {
       await updateAverageRating(currentBox);
-      
+
       // Update navbar avatar with latest profile picture
       const navbar = document.querySelector('app-navbar');
       if (navbar && navbar.updateAvatar && currentUser) {
@@ -538,7 +550,7 @@ form.addEventListener("submit", async (event) => {
           console.error('Error updating navbar avatar:', err);
         }
       }
-      
+
       alert("Your review was submitted successfully!");
       form.reset();
       selectedStar = 0;
@@ -673,6 +685,7 @@ openModalBtn.addEventListener("click", openModal);
 //chat
 const messages = document.getElementById("messages");
 const chatInput = document.getElementById("chatInput");
+chatInput.placeholder = "Leave a comment";
 const sendBtn = document.getElementById("sendBtn");
 const attachBtn = document.getElementById("attachBtn");
 const attachInput = document.getElementById("attachInput");
@@ -772,13 +785,13 @@ async function getUserAvatar(uid) {
     if (userDoc.exists()) {
       const userData = userDoc.data();
       const photoURL = userData.photoURL;
-      
+
       // Only use valid photoURLs (not placeholder/random images)
-      if (photoURL && 
-          photoURL.trim() !== '' && 
-          (photoURL.startsWith('http://') || photoURL.startsWith('https://')) &&
-          !photoURL.includes('pravatar.cc') &&
-          !photoURL.includes('i.pravatar.cc')) {
+      if (photoURL &&
+        photoURL.trim() !== '' &&
+        (photoURL.startsWith('http://') || photoURL.startsWith('https://')) &&
+        !photoURL.includes('pravatar.cc') &&
+        !photoURL.includes('i.pravatar.cc')) {
         avatarCache[uid] = photoURL;
         return photoURL;
       }
@@ -855,7 +868,7 @@ function initChatListener(boxRef) {
 sendBtn.addEventListener("click", async () => {
   const text = chatInput.value.trim();
   const imageFile = attachInput?.files[0];
-  
+
   // Need either text or image
   if (!text && !imageFile) return;
 
@@ -887,13 +900,13 @@ sendBtn.addEventListener("click", async () => {
     }
 
     let imageUrl = null;
-    
+
     // Upload image if attached
     if (imageFile) {
       try {
         sendBtn.disabled = true;
         sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        
+
         imageUrl = await window.uploadImage(imageFile, `chat/${currentBoxRef.id}`);
         console.log("Chat image uploaded:", imageUrl);
       } catch (uploadError) {
@@ -938,7 +951,7 @@ sendBtn.addEventListener("click", async () => {
     // Clear inputs
     chatInput.value = "";
     if (attachInput) attachInput.value = "";
-    
+
     // Reset button
     sendBtn.disabled = false;
     sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
@@ -1034,7 +1047,7 @@ if (attachBtn && attachInput) {
       }
 
       console.log("Image sent:", imageUrl);
-      
+
       // Clear input
       attachInput.value = "";
     } catch (err) {
