@@ -5,7 +5,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-html, body {
+
+html,
+body {
     height: 100%;
 }
 
@@ -192,8 +194,16 @@ main {
 }
 
 @media screen and (max-width: 900px) {
+    .images img:nth-of-type(4) {
+        grid-column: 7 / 11;
+        grid-row: 3 / 5;
+    }
+        .images img:nth-of-type(5) {
+        grid-column: 11 / 15;
+        grid-row: 3 / 5;
+    }
 
-    .images img:nth-of-type(n+8) {
+    .images img:nth-of-type(n+6) {
         display: none;
     }
 
@@ -548,7 +558,8 @@ button {
     flex: 1 1 auto;
     overflow-y: scroll;
     min-height: 0;
-    -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* smooth scrolling on iOS */
 
 }
 
@@ -619,18 +630,22 @@ button {
     main {
         padding: 1rem;
         gap: 1rem;
+        flex-direction: column;
     }
 
-    .left, .right {
+    .left,
+    .right {
         padding: 0;
     }
+
     #boxName {
         font-size: 24px;
     }
 
-    p{
+    p {
         font-size: 15px;
     }
+
     .fav button {
         font-size: 15px;
     }
