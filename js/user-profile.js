@@ -122,7 +122,7 @@ function showUserInfo(user) {
 
     // Photo
     if (profilePhoto) {
-        profilePhoto.src = user.photoURL || 'https://i.pravatar.cc/160?img=12';
+        profilePhoto.src = user.photoURL || 'https://res.cloudinary.com/dlsdg0urv/image/upload/v1763164659/tffgil0ykc9fjimshlve.png';
         profilePhoto.alt = user.displayName || 'Profile photo';
     }
 
@@ -439,8 +439,14 @@ if (editIcon) {
         const userRef = doc(db, 'users', currentUser.uid);
         const userSnap = await getDoc(userRef);
 
+        const defo_photo = 'https://res.cloudinary.com/dlsdg0urv/image/upload/v1763164659/tffgil0ykc9fjimshlve.png';
+
         if (userSnap.exists()) {
             const data = userSnap.data();
+
+        if (modalPhoto) {
+                modalPhoto.src = data.photoURL || defo_photo;
+            }
 
             if (modalPhoto) modalPhoto.src = data.photoURL || '';
             if (editName) editName.value = data.displayName || '';
