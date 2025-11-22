@@ -1,4 +1,4 @@
-// user-profile.js (patched, Auth-aware, summary-eye opens modal & reveals input)
+// user-profile.js (patched, Auth-aware, inline eye shows password; modal opens via edit icon only)
 
 // --- Firebase (v9 modular) ---
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
@@ -116,6 +116,9 @@ async function fetchUsers(userId) {
     }
 }
 
+// keep the original Firestore password (if present) for inline reveal
+let originalPassword = '';
+
 // ---------- Render user info ----------
 function showUserInfo(user) {
     if (!user) return;
@@ -143,27 +146,17 @@ function showUserInfo(user) {
         currentLocation.textContent = user.locationName || 'No location';
     }
 
-    // Password (NEVER show real password – always masked placeholder)
+    // Password (inline reveal with eye; NO modal open here)
+    originalPassword = user.password || ''; // will be empty if you don't store it
     if (passwordEl) {
-        passwordEl.textContent = '••••••••';
+        // start masked
+        passwordEl.textContent = mask(originalPassword);
+
         if (toggle) {
             toggle.classList.remove('toggled');
-            // Clicking the summary eye opens the modal and REVEALS the input
             toggle.onclick = () => {
-                if (editModal) editModal.classList.add('show');
-
-                // ensure the edit field starts revealed
-                if (editPassword) {
-                    editPassword.type = 'text';
-                    setTimeout(() => editPassword.focus(), 0);
-                }
-                if (editPwdToggle) {
-                    editPwdToggle.setAttribute('aria-pressed', 'true');
-                }
-                if (editPwdEye && editPwdEyeOff) {
-                    editPwdEye.style.display = 'none';
-                    editPwdEyeOff.style.display = 'inline';
-                }
+                const isOn = toggle.classList.toggle('toggled');
+                passwordEl.textContent = isOn ? originalPassword : mask(originalPassword);
             };
         }
     }
@@ -444,11 +437,10 @@ if (editIcon) {
         if (userSnap.exists()) {
             const data = userSnap.data();
 
-        if (modalPhoto) {
+            if (modalPhoto) {
                 modalPhoto.src = data.photoURL || defo_photo;
             }
 
-            if (modalPhoto) modalPhoto.src = data.photoURL || '';
             if (editName) editName.value = data.displayName || '';
             if (editEmail) editEmail.value = data.email || '';
             if (editLocation) editLocation.value = data.locationName || '';
@@ -525,7 +517,12 @@ if (saveBtn) {
             displayNameEls.forEach((el) => (el.textContent = updates.displayName || 'No name'));
             if (emailEl) emailEl.textContent = updates.email || 'No email';
             if (currentLocation) currentLocation.textContent = updates.locationName || 'No location';
-            if (passwordEl) passwordEl.textContent = '••••••••';
+
+            // Always keep the summary masked
+            if (passwordEl) passwordEl.textContent = mask(originalPassword);
+            if (toggle) toggle.classList.remove('toggled');
+
+            // Clear modal password field
             if (editPassword) editPassword.value = '';
 
             alert('Profile updated successfully');
