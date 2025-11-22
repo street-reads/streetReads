@@ -541,7 +541,7 @@ function filterPopup() {
     const updateFilter = document.getElementById('updateFilter');
 
     if (filterBtn) filterBtn.addEventListener('click', () => (filterField.style.display = 'block'));
-    // if (closeFilter) closeFilter.addEventListener('click', () => (filterField.style.display = 'none'));
+    if (closeFilter) closeFilter.addEventListener('click', () => (filterField.style.display = 'none'));
 
     document.addEventListener('click', (e) => {
         if (!filterField) return;
@@ -1066,7 +1066,8 @@ async function showRecentlyUpdated(map = appMap, days = 7) {
             return;
         }
         if (recentCb && recentCb.checked) {
-            showRecentlyUpdated(appMap, 1);
+            // default to 7 days when user selects "Recently updated"
+            showRecentlyUpdated(appMap, 7);
             const ff = document.getElementById('filterFeild');
             if (ff) ff.style.display = 'none';
             return;
