@@ -281,7 +281,7 @@ async function countUserContribution(userId, userDisplayName) {
         }
     });
 
-    if (numberOfPost) numberOfPost.textContent = `${totalComments} posts`;
+    if (numberOfPost) numberOfPost.textContent = `${totalComments}`;
     if (reviewNumber) reviewNumber.textContent = totalReviews;
     if (addedBox) addedBox.textContent = totalAddedBox;
 
