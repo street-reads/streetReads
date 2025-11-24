@@ -276,37 +276,26 @@ function loadBox() {
       if (imgContainer) {
         imgContainer.innerHTML = "";
 
-        const photoURL = foundBox.photoURL;
-        console.log("photoURL:", photoURL);
-        console.log("type:", typeof photoURL);
+        let photoURLs = Array.isArray(foundBox.photoURL) ? foundBox.photoURL : [];
 
-        // Check if photoURL is an array with images
-        if (Array.isArray(photoURL) && photoURL.length > 0) {
-          photoURL.forEach((url, index) => {
-            const imgs = document.createElement("img");
-            imgs.src = url;
-            imgs.alt = `BookBox image ${index + 1}`;
-            imgs.className = "box-image";
-            imgs.style.cursor = 'pointer';
-            // Add click to view larger functionality if needed
-            imgContainer.appendChild(imgs);
-          });
-        } else {
-          // No images available
-          // const noImagesMsg = document.createElement("p");
-          // noImagesMsg.textContent = "No images yet, add the first one!";
-          // noImagesMsg.style.textAlign = "center";
-          // noImagesMsg.style.padding = "2rem";
-          // noImagesMsg.style.color = "#666";
-          // imgContainer.appendChild(noImagesMsg);
-          const noImagesMsg = document.createElement("img");
-          noImagesMsg.src = "../images/placeholder_img.jpg";
-          noImagesMsg.alt = "No image available";
-          noImagesMsg.style.width = "200px"; // 必要なら
-          imgContainer.appendChild(noImagesMsg);
-
+        const totalSlots = 11;
+        for (let i = 0; i < totalSlots; i++) {
+          const img = document.createElement("img");
+          if (photoURLs[i]) {
+            // ユーザーがアップロードした画像があれば表示
+            img.src = photoURLs[i];
+            img.alt = `BookBox image ${i + 1}`;
+          } else {
+            img.src = "../images/placeholder_img.png";
+            img.alt = "Placeholder image";
+            img.classList.add("placeholder");
+          }
+          img.className = "box-image";
+          img.style.cursor = "pointer";
+          imgContainer.appendChild(img);
         }
       }
+
 
       function enableMobilePopup() {
         const isMobile = window.innerWidth <= 768;
