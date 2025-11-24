@@ -86,7 +86,7 @@ body {
 
   .profile-head {
   display: grid;  
-  grid-template-columns: 20% 60% 15%;
+  grid-template-columns: 30% 50% 15%;
   gap: 16px;
 }
 }
@@ -194,9 +194,9 @@ body {
 
 .info-table .row {
   display: grid;
-  grid-template-columns: 20% 1fr;
+  grid-template-columns: 30% 1fr;
   gap: 8px;
-  padding: 18px 16px 8px 16px;
+  padding: 18px 28px 8px 28px;
   border-top: 1px solid var(--line)
 }
 
@@ -220,7 +220,7 @@ body {
 }
 
 .privacy .section-title {
-  padding: 16px;
+  padding: 16px 28px;
   margin: 32px 0 8px;
   font-size: 1rem
 }
@@ -228,7 +228,7 @@ body {
 .privacy .row {
   display: flex;
   gap: 8px;
-  padding: 16px 16px 2px 16px;
+  padding: 16px 28px 2px 28px;
   justify-content: space-between;
 
   border-top: 0.4px solid #C4C0C0;
@@ -733,7 +733,7 @@ body {
 #editPwdToggle {
   width: 38px;
   height: 38px;
-  border: 1px solid var(--line);
+  border: 1px solid white;
   background: #fff;
   color: var(--brand);
   border-radius: var(--radius);
@@ -803,6 +803,8 @@ body {
   display: flex;
   align-items: center;
   margin: 0;
+  justify-content: flex-end;
+  padding-right: 25px;
 }
 .privacy .section-title {
   padding-left: 12px;
